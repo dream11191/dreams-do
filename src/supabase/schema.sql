@@ -1,183 +1,199 @@
--- 在 Supabase SQL Editor 中执行以下 SQL 创建所有表
+-- ========================================
+-- 先删除所有旧表，再重建（列名加引号保持大小写）
+-- ========================================
+
+DROP TABLE IF EXISTS transactions CASCADE;
+DROP TABLE IF EXISTS birthdays CASCADE;
+DROP TABLE IF EXISTS task_material_links CASCADE;
+DROP TABLE IF EXISTS material_items CASCADE;
+DROP TABLE IF EXISTS material_folders CASCADE;
+DROP TABLE IF EXISTS study_tasks CASCADE;
+DROP TABLE IF EXISTS study_projects CASCADE;
+DROP TABLE IF EXISTS accounts CASCADE;
+DROP TABLE IF EXISTS ledger_rows CASCADE;
+DROP TABLE IF EXISTS ledger_tables CASCADE;
+DROP TABLE IF EXISTS quick_notes CASCADE;
+DROP TABLE IF EXISTS settings CASCADE;
+DROP TABLE IF EXISTS schedules CASCADE;
 
 -- 日程
-CREATE TABLE IF NOT EXISTS schedules (
+CREATE TABLE schedules (
   id TEXT PRIMARY KEY,
   title TEXT NOT NULL,
   content TEXT DEFAULT '',
   link TEXT,
-  reminderTime TEXT,
-  deadlineTime TEXT,
-  repeatType TEXT DEFAULT 'none',
+  "reminderTime" TEXT,
+  "deadlineTime" TEXT,
+  "repeatType" TEXT DEFAULT 'none',
   priority TEXT DEFAULT 'medium',
   tags JSONB DEFAULT '[]',
   completed BOOLEAN DEFAULT false,
   overdue BOOLEAN DEFAULT false,
-  createdAt TEXT,
-  updatedAt TEXT,
+  "createdAt" TEXT,
+  "updatedAt" TEXT,
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE
 );
 ALTER TABLE schedules ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users can CRUD own schedules" ON schedules FOR ALL USING (auth.uid() = user_id);
 
 -- 记账表格
-CREATE TABLE IF NOT EXISTS ledger_tables (
+CREATE TABLE ledger_tables (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
   category TEXT DEFAULT '',
   headers JSONB DEFAULT '[]',
-  createdAt TEXT,
-  updatedAt TEXT,
+  "createdAt" TEXT,
+  "updatedAt" TEXT,
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE
 );
 ALTER TABLE ledger_tables ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users can CRUD own ledger_tables" ON ledger_tables FOR ALL USING (auth.uid() = user_id);
 
 -- 记账行
-CREATE TABLE IF NOT EXISTS ledger_rows (
+CREATE TABLE ledger_rows (
   id TEXT PRIMARY KEY,
-  tableId TEXT NOT NULL,
+  "tableId" TEXT NOT NULL,
   cells JSONB DEFAULT '{}',
-  createdAt TEXT,
+  "createdAt" TEXT,
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE
 );
 ALTER TABLE ledger_rows ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users can CRUD own ledger_rows" ON ledger_rows FOR ALL USING (auth.uid() = user_id);
 
 -- 账户
-CREATE TABLE IF NOT EXISTS accounts (
+CREATE TABLE accounts (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
   balance REAL DEFAULT 0,
   icon TEXT DEFAULT '💰',
   color TEXT DEFAULT '#6366f1',
   note TEXT,
-  createdAt TEXT,
-  updatedAt TEXT,
+  "createdAt" TEXT,
+  "updatedAt" TEXT,
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE
 );
 ALTER TABLE accounts ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users can CRUD own accounts" ON accounts FOR ALL USING (auth.uid() = user_id);
 
 -- 学习项目
-CREATE TABLE IF NOT EXISTS study_projects (
+CREATE TABLE study_projects (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
   description TEXT DEFAULT '',
-  targetCount INTEGER DEFAULT 0,
+  "targetCount" INTEGER DEFAULT 0,
   tags JSONB DEFAULT '[]',
-  createdAt TEXT,
-  updatedAt TEXT,
+  "createdAt" TEXT,
+  "updatedAt" TEXT,
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE
 );
 ALTER TABLE study_projects ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users can CRUD own study_projects" ON study_projects FOR ALL USING (auth.uid() = user_id);
 
 -- 学习任务
-CREATE TABLE IF NOT EXISTS study_tasks (
+CREATE TABLE study_tasks (
   id TEXT PRIMARY KEY,
-  projectId TEXT NOT NULL,
+  "projectId" TEXT NOT NULL,
   name TEXT NOT NULL,
-  startTime TEXT,
-  deadlineTime TEXT,
+  "startTime" TEXT,
+  "deadlineTime" TEXT,
   status TEXT DEFAULT 'pending',
-  solutionLink TEXT,
-  errorNotes TEXT,
-  masteryLevel INTEGER,
+  "solutionLink" TEXT,
+  "errorNotes" TEXT,
+  "masteryLevel" INTEGER,
   difficulty TEXT DEFAULT 'medium',
   tags JSONB DEFAULT '[]',
   duration INTEGER,
-  completedAt TEXT,
-  createdAt TEXT,
-  updatedAt TEXT,
+  "completedAt" TEXT,
+  "createdAt" TEXT,
+  "updatedAt" TEXT,
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE
 );
 ALTER TABLE study_tasks ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users can CRUD own study_tasks" ON study_tasks FOR ALL USING (auth.uid() = user_id);
 
 -- 素材文件夹
-CREATE TABLE IF NOT EXISTS material_folders (
+CREATE TABLE material_folders (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
   icon TEXT DEFAULT '📁',
-  createdAt TEXT,
+  "createdAt" TEXT,
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE
 );
 ALTER TABLE material_folders ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users can CRUD own material_folders" ON material_folders FOR ALL USING (auth.uid() = user_id);
 
 -- 素材
-CREATE TABLE IF NOT EXISTS material_items (
+CREATE TABLE material_items (
   id TEXT PRIMARY KEY,
   title TEXT NOT NULL,
-  folderId TEXT,
+  "folderId" TEXT,
   type TEXT DEFAULT 'other',
   tags JSONB DEFAULT '[]',
   content TEXT DEFAULT '',
   links JSONB DEFAULT '[]',
-  imageUrls JSONB DEFAULT '[]',
+  "imageUrls" JSONB DEFAULT '[]',
   status TEXT DEFAULT 'collected',
-  createdAt TEXT,
-  updatedAt TEXT,
+  "createdAt" TEXT,
+  "updatedAt" TEXT,
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE
 );
 ALTER TABLE material_items ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users can CRUD own material_items" ON material_items FOR ALL USING (auth.uid() = user_id);
 
 -- 速记
-CREATE TABLE IF NOT EXISTS quick_notes (
+CREATE TABLE quick_notes (
   id TEXT PRIMARY KEY,
   content TEXT DEFAULT '',
-  createdAt TEXT,
+  "createdAt" TEXT,
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE
 );
 ALTER TABLE quick_notes ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users can CRUD own quick_notes" ON quick_notes FOR ALL USING (auth.uid() = user_id);
 
 -- 任务素材关联
-CREATE TABLE IF NOT EXISTS task_material_links (
+CREATE TABLE task_material_links (
   id TEXT PRIMARY KEY,
-  taskId TEXT NOT NULL,
-  materialId TEXT NOT NULL,
+  "taskId" TEXT NOT NULL,
+  "materialId" TEXT NOT NULL,
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE
 );
 ALTER TABLE task_material_links ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users can CRUD own task_material_links" ON task_material_links FOR ALL USING (auth.uid() = user_id);
 
 -- 设置
-CREATE TABLE IF NOT EXISTS settings (
+CREATE TABLE settings (
   id TEXT PRIMARY KEY DEFAULT 'app',
-  darkMode BOOLEAN DEFAULT false,
-  userName TEXT DEFAULT '同学',
-  backgroundImage TEXT DEFAULT '',
+  "darkMode" BOOLEAN DEFAULT false,
+  "userName" TEXT DEFAULT '同学',
+  "backgroundImage" TEXT DEFAULT '',
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE
 );
 ALTER TABLE settings ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users can CRUD own settings" ON settings FOR ALL USING (auth.uid() = user_id);
 
 -- 生日
-CREATE TABLE IF NOT EXISTS birthdays (
+CREATE TABLE birthdays (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
   month INTEGER NOT NULL,
   day INTEGER NOT NULL,
-  createdAt TEXT,
-  updatedAt TEXT,
+  "createdAt" TEXT,
+  "updatedAt" TEXT,
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE
 );
 ALTER TABLE birthdays ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users can CRUD own birthdays" ON birthdays FOR ALL USING (auth.uid() = user_id);
 
 -- 账户交易流水
-CREATE TABLE IF NOT EXISTS transactions (
+CREATE TABLE transactions (
   id TEXT PRIMARY KEY,
-  accountId TEXT NOT NULL,
+  "accountId" TEXT NOT NULL,
   type TEXT NOT NULL DEFAULT 'expense',
   category TEXT DEFAULT '',
   amount REAL DEFAULT 0,
   note TEXT DEFAULT '',
   date TEXT DEFAULT '',
-  createdAt TEXT,
+  "createdAt" TEXT,
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE
 );
 ALTER TABLE transactions ENABLE ROW LEVEL SECURITY;
