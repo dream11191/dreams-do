@@ -283,7 +283,7 @@ export default function Study() {
 
           {/* 任务列表 */}
           <div className="space-y-2">
-            {tasks.map((task) => {
+            {tasks.filter(Boolean).map((task) => {
               const linkedMaterials = getLinkedMaterials(task.id);
               return (
                 <div

@@ -258,7 +258,7 @@ async function syncedGetAll<T>(storeName: string): Promise<T[]> {
       return merged;
     }
   }
-  return local;
+  return local.filter(Boolean);
 }
 
 async function syncedGetOne<T>(storeName: string, id: string): Promise<T | undefined> {
@@ -301,7 +301,7 @@ async function syncedGetByIndex<T>(storeName: string, indexName: string, value: 
       return mergeData(local, cloud);
     }
   }
-  return local;
+  return local.filter(Boolean);
 }
 
 // ==================== 日程 CRUD ====================
