@@ -200,3 +200,12 @@ CREATE TABLE transactions (
 );
 ALTER TABLE transactions ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users can CRUD own transactions" ON transactions FOR ALL USING (auth.uid() = user_id);
+
+-- ==================== 存储桶 ====================
+-- 在 Supabase SQL Editor 中执行以下命令创建存储桶
+-- INSERT INTO storage.buckets (id, name, public) VALUES ('materials', 'materials', true);
+-- 然后为该存储桶创建策略：
+-- CREATE POLICY "Users can upload materials" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'materials' AND auth.uid() = owner);
+-- CREATE POLICY "Users can read materials" ON storage.objects FOR SELECT USING (bucket_id = 'materials');
+-- CREATE POLICY "Users can update own materials" ON storage.objects FOR UPDATE USING (bucket_id = 'materials' AND auth.uid() = owner);
+-- CREATE POLICY "Users can delete own materials" ON storage.objects FOR DELETE USING (bucket_id = 'materials' AND auth.uid() = owner);

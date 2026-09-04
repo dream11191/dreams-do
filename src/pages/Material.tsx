@@ -89,7 +89,7 @@ export default function Material() {
   };
 
   const openEditItem = (item: MaterialItem) => {
-    setEditingItem({ ...item });
+    setEditingItem({ ...item, files: Array.isArray(item.files) ? item.files : [], links: Array.isArray(item.links) ? item.links : [], tags: Array.isArray(item.tags) ? item.tags : [] });
     setPendingFiles([]);
     setItemModalOpen(true);
   };
@@ -152,14 +152,16 @@ export default function Material() {
 
   const removeUploadedFile = (index: number) => {
     if (!editingItem) return;
-    const newFiles = editingItem.files.filter((_, i) => i !== index);
+    const safeFiles = Array.isArray(editingItem.files) ? editingItem.files : [];
+    const newFiles = safeFiles.filter((_, i) => i !== index);
     setEditingItem({ ...editingItem, files: newFiles });
   };
 
   const saveItem = async () => {
     if (!editingItem || !editingItem.title.trim()) return;
     const newFiles = await uploadFiles();
-    editingItem.files = [...editingItem.files, ...newFiles];
+    const safeExisting = Array.isArray(editingItem.files) ? editingItem.files : [];
+    editingItem.files = [...safeExisting, ...newFiles];
     editingItem.updatedAt = new Date().toISOString();
     await materialItemDB.save(editingItem);
     setItemModalOpen(false);

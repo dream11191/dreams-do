@@ -110,6 +110,7 @@ const TABLE_MAP: Record<string, string> = {
   task_material_links: 'task_material_links',
   birthdays: 'birthdays',
   transactions: 'transactions',
+  settings: 'settings',
 };
 
 async function getUserId(): Promise<string | null> {
