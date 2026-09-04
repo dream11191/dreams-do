@@ -131,7 +131,7 @@ CREATE TABLE material_items (
   tags JSONB DEFAULT '[]',
   content TEXT DEFAULT '',
   links JSONB DEFAULT '[]',
-  "imageUrls" JSONB DEFAULT '[]',
+  "files" JSONB DEFAULT '[]',
   status TEXT DEFAULT 'collected',
   "createdAt" TEXT,
   "updatedAt" TEXT,
@@ -144,6 +144,7 @@ CREATE POLICY "Users can CRUD own material_items" ON material_items FOR ALL USIN
 CREATE TABLE quick_notes (
   id TEXT PRIMARY KEY,
   content TEXT DEFAULT '',
+  "color" TEXT DEFAULT '#ffffff',
   "createdAt" TEXT,
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE
 );
@@ -165,6 +166,7 @@ CREATE TABLE settings (
   id TEXT PRIMARY KEY DEFAULT 'app',
   "darkMode" BOOLEAN DEFAULT false,
   "userName" TEXT DEFAULT '同学',
+  "avatar" TEXT DEFAULT '',
   "backgroundImage" TEXT DEFAULT '',
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE
 );

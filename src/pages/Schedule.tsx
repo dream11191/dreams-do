@@ -151,12 +151,13 @@ export default function Schedule() {
         {filtered.map((s) => (
           <div
             key={s.id}
-            className={`card flex items-start gap-3 ${s.completed ? 'opacity-60' : ''} ${s.priority === 'high' && !s.completed ? 'border-l-4 border-l-red-500' : ''}`}
+            className={`card flex items-start gap-3 cursor-pointer hover:shadow-md transition-shadow ${s.completed ? 'opacity-60' : ''} ${s.priority === 'high' && !s.completed ? 'border-l-4 border-l-red-500' : ''}`}
+            onClick={() => navigate(`/schedule/${s.id}`)}
           >
             <input
               type="checkbox"
               checked={s.completed}
-              onChange={() => toggleComplete(s)}
+              onChange={(e) => { e.stopPropagation(); toggleComplete(s); }}
               className="mt-1 w-4 h-4 accent-primary-500"
             />
             <div className="flex-1 min-w-0">
@@ -169,7 +170,7 @@ export default function Schedule() {
                   </span>
                 )}
               </div>
-              {s.content && <p className="text-xs text-gray-500 mt-1 truncate">{s.content}</p>}
+              {s.content && <p className="text-xs text-gray-500 mt-1 line-clamp-2 break-words">{s.content}</p>}
               <div className="flex items-center gap-3 mt-1 text-xs text-gray-400">
                 <span>⏰ {formatDate(s.reminderTime)} {formatTime(s.reminderTime)}</span>
                 <span>📌 {formatDate(s.deadlineTime)} 截止</span>
@@ -178,7 +179,7 @@ export default function Schedule() {
                 )}
               </div>
               {s.link && (
-                <a href={s.link} target="_blank" rel="noopener noreferrer" className="text-xs text-primary-500 hover:underline mt-1 block">
+                <a href={s.link} target="_blank" rel="noopener noreferrer" className="text-xs text-primary-500 hover:underline mt-1 block" onClick={(e) => e.stopPropagation()}>
                   🔗 {s.link}
                 </a>
               )}
@@ -190,7 +191,7 @@ export default function Schedule() {
                 </div>
               )}
             </div>
-            <div className="flex gap-1">
+            <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
               <button className="btn-secondary btn-sm" onClick={() => openEdit(s)}>✏️</button>
               <button className="btn-danger btn-sm" onClick={() => deleteSchedule(s.id)}>🗑</button>
             </div>

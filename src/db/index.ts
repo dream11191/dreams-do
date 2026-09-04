@@ -402,8 +402,8 @@ export const quickNoteDB = {
 export const settingsDB = {
   get: async (): Promise<AppSettings> => {
     const local = await localGetOne<AppSettings & { id: string }>('settings', 'app');
-    const defaults: AppSettings = { darkMode: false, userName: '同学', backgroundImage: '' };
-    const localSettings = local ? { darkMode: local.darkMode, userName: local.userName, backgroundImage: local.backgroundImage } : defaults;
+    const defaults: AppSettings = { darkMode: false, userName: '同学', avatar: '', backgroundImage: '' };
+    const localSettings = local ? { darkMode: local.darkMode, userName: local.userName, avatar: local.avatar || '', backgroundImage: local.backgroundImage } : defaults;
     const userId = await getUserId();
     if (userId) {
       const cloud = await cloudGetOne<AppSettings>('settings', 'app');
@@ -411,6 +411,7 @@ export const settingsDB = {
         return {
           darkMode: cloud.darkMode ?? localSettings.darkMode,
           userName: cloud.userName ?? localSettings.userName,
+          avatar: cloud.avatar ?? localSettings.avatar,
           backgroundImage: cloud.backgroundImage ?? localSettings.backgroundImage,
         };
       }

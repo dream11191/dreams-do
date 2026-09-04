@@ -152,7 +152,7 @@ export function createMaterialItem(partial: Partial<MaterialItem>): MaterialItem
     tags: [],
     content: '',
     links: [],
-    imageUrls: [],
+    files: [],
     status: 'collected',
     createdAt: nowISO(),
     updatedAt: nowISO(),
@@ -164,6 +164,7 @@ export function createQuickNote(partial: Partial<QuickNote>): QuickNote {
   return {
     id: generateId(),
     content: '',
+    color: '#ffffff',
     createdAt: nowISO(),
     ...partial,
   };

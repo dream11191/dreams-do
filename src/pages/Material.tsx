@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { materialFolderDB, materialItemDB } from '../db';
-import type { MaterialFolder, MaterialItem } from '../types';
+import { supabase } from '../supabase/client';
+import type { MaterialFolder, MaterialItem, MaterialFile } from '../types';
 import { createMaterialFolder, createMaterialItem, getStatusLabel, getStatusColor, formatDate, generateId } from '../utils';
 import Modal from '../components/Modal';
 import TagSelector from '../components/TagSelector';
@@ -21,6 +22,8 @@ const typeLabels: Record<string, string> = {
   other: '其他',
 };
 
+const MATERIAL_BUCKET = 'materials';
+
 export default function Material() {
   const [folders, setFolders] = useState<MaterialFolder[]>([]);
   const [selectedFolder, setSelectedFolder] = useState<MaterialFolder | null>(null);
@@ -31,6 +34,10 @@ export default function Material() {
   const [editingItem, setEditingItem] = useState<MaterialItem | null>(null);
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterType, setFilterType] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [uploading, setUploading] = useState(false);
+  const [pendingFiles, setPendingFiles] = useState<{ file: File; customName: string }[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     loadFolders();
@@ -76,20 +83,87 @@ export default function Material() {
   const openNewItem = () => {
     if (!selectedFolder) return;
     setEditingItem(createMaterialItem({ folderId: selectedFolder.id }));
+    setPendingFiles([]);
     setItemModalOpen(true);
   };
 
   const openEditItem = (item: MaterialItem) => {
     setEditingItem({ ...item });
+    setPendingFiles([]);
     setItemModalOpen(true);
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+    const newPending: { file: File; customName: string }[] = [];
+    for (let i = 0; i < files.length; i++) {
+      const f = files[i];
+      newPending.push({ file: f, customName: f.name });
+    }
+    setPendingFiles((prev) => [...prev, ...newPending]);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const updatePendingFileName = (index: number, name: string) => {
+    setPendingFiles((prev) => prev.map((pf, i) => (i === index ? { ...pf, customName: name } : pf)));
+  };
+
+  const removePendingFile = (index: number) => {
+    setPendingFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const uploadFiles = async (): Promise<MaterialFile[]> => {
+    if (pendingFiles.length === 0) return [];
+    setUploading(true);
+    const uploaded: MaterialFile[] = [];
+    try {
+      for (const pf of pendingFiles) {
+        const ext = pf.file.name.split('.').pop() || '';
+        const safeName = pf.customName || pf.file.name;
+        const storagePath = `${generateId()}/${safeName}`;
+        const { data, error } = await supabase.storage
+          .from(MATERIAL_BUCKET)
+          .upload(storagePath, pf.file, { upsert: true });
+        if (error) {
+          console.error('Upload error:', error);
+          alert(`上传失败: ${error.message}`);
+          continue;
+        }
+        const { data: urlData } = supabase.storage
+          .from(MATERIAL_BUCKET)
+          .getPublicUrl(data.path);
+        const isImage = pf.file.type.startsWith('image/');
+        uploaded.push({
+          name: safeName,
+          originalName: pf.file.name,
+          path: data.path,
+          url: urlData.publicUrl,
+          type: isImage ? 'image' : 'document',
+          size: pf.file.size,
+        });
+      }
+    } finally {
+      setUploading(false);
+    }
+    return uploaded;
+  };
+
+  const removeUploadedFile = (index: number) => {
+    if (!editingItem) return;
+    const newFiles = editingItem.files.filter((_, i) => i !== index);
+    setEditingItem({ ...editingItem, files: newFiles });
   };
 
   const saveItem = async () => {
     if (!editingItem || !editingItem.title.trim()) return;
+    const newFiles = await uploadFiles();
+    editingItem.files = [...editingItem.files, ...newFiles];
     editingItem.updatedAt = new Date().toISOString();
     await materialItemDB.save(editingItem);
     setItemModalOpen(false);
     setEditingItem(null);
+    setPendingFiles([]);
     if (selectedFolder) loadItems(selectedFolder.id);
   };
 
@@ -109,8 +183,22 @@ export default function Material() {
   const filteredItems = items.filter((item) => {
     if (filterStatus !== 'all' && item.status !== filterStatus) return false;
     if (filterType !== 'all' && item.type !== filterType) return false;
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      const matchTitle = item.title.toLowerCase().includes(q);
+      const matchContent = item.content.toLowerCase().includes(q);
+      const matchTags = item.tags.some((t) => t.name.toLowerCase().includes(q));
+      const matchFiles = item.files.some((f) => f.name.toLowerCase().includes(q) || f.originalName.toLowerCase().includes(q));
+      if (!matchTitle && !matchContent && !matchTags && !matchFiles) return false;
+    }
     return true;
   });
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  };
 
   return (
     <div className="space-y-6">
@@ -120,6 +208,19 @@ export default function Material() {
           <button className="btn-secondary" onClick={openNewFolder}>+ 新建文件夹</button>
           {selectedFolder && <button className="btn-primary" onClick={openNewItem}>+ 添加素材</button>}
         </div>
+      </div>
+
+      {/* 搜索 */}
+      <div className="relative">
+        <input
+          className="input pl-9"
+          placeholder="搜索素材标题、内容、标签、文件名..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+        <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
       </div>
 
       {/* 文件夹选择 */}
@@ -159,6 +260,9 @@ export default function Material() {
               <option value="life">生活收集</option>
               <option value="other">其他</option>
             </select>
+            {searchQuery && (
+              <span className="text-xs text-gray-500 self-center">找到 {filteredItems.length} 个结果</span>
+            )}
           </div>
 
           {/* 素材卡片 */}
@@ -166,9 +270,9 @@ export default function Material() {
             {filteredItems.map((item) => (
               <div key={item.id} className="card hover:shadow-md transition-shadow">
                 {/* 图片预览 */}
-                {item.imageUrls.length > 0 && (
+                {item.files.filter((f) => f.type === 'image').length > 0 && (
                   <div className="mb-3 -mx-4 -mt-4 rounded-t-xl overflow-hidden">
-                    <img src={item.imageUrls[0]} alt={item.title} className="w-full h-32 object-cover" />
+                    <img src={item.files.filter((f) => f.type === 'image')[0].url} alt={item.title} className="w-full h-32 object-cover" />
                   </div>
                 )}
                 <div className="flex items-start justify-between">
@@ -189,6 +293,25 @@ export default function Material() {
                     {item.links.map((link, i) => (
                       <a key={i} href={link} target="_blank" rel="noopener noreferrer" className="text-xs text-primary-500 hover:underline block truncate">
                         🔗 {link}
+                      </a>
+                    ))}
+                  </div>
+                )}
+
+                {/* 文件列表 */}
+                {item.files.length > 0 && (
+                  <div className="mt-2 space-y-1">
+                    {item.files.map((f, i) => (
+                      <a
+                        key={i}
+                        href={f.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1 text-xs text-primary-500 hover:underline"
+                      >
+                        <span>{f.type === 'image' ? '🖼️' : '📄'}</span>
+                        <span className="truncate">{f.name}</span>
+                        <span className="text-gray-400 shrink-0">{formatFileSize(f.size)}</span>
                       </a>
                     ))}
                   </div>
@@ -219,7 +342,7 @@ export default function Material() {
             ))}
           </div>
           {filteredItems.length === 0 && (
-            <p className="text-center text-gray-400 py-8">暂无素材</p>
+            <p className="text-center text-gray-400 py-8">{searchQuery ? '未找到匹配的素材' : '暂无素材'}</p>
           )}
         </>
       )}
@@ -284,16 +407,75 @@ export default function Material() {
                 placeholder="https://..."
               />
             </div>
+
+            {/* 文件上传区域 */}
             <div>
-              <label className="text-sm font-medium mb-1 block">图片链接（每行一个）</label>
-              <textarea
-                className="input"
-                rows={2}
-                value={editingItem.imageUrls.join('\n')}
-                onChange={(e) => setEditingItem({ ...editingItem, imageUrls: e.target.value.split('\n').filter(Boolean) })}
-                placeholder="https://..."
-              />
+              <label className="text-sm font-medium mb-1 block">上传文件（图片/文档）</label>
+              <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4 text-center hover:border-primary-400 dark:hover:border-primary-500 transition-colors">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*,.pdf,.doc,.docx,.txt,.csv,.xlsx,.pptx,.zip,.rar"
+                  multiple
+                  onChange={handleFileSelect}
+                  className="hidden"
+                />
+                <button
+                  type="button"
+                  className="btn-secondary btn-sm"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  📎 选择文件
+                </button>
+                <p className="text-xs text-gray-400 mt-1">支持图片、PDF、Word、Excel、PPT、TXT、压缩包等</p>
+              </div>
             </div>
+
+            {/* 已上传的文件列表 */}
+            {editingItem.files.length > 0 && (
+              <div>
+                <label className="text-sm font-medium mb-1 block">已上传文件</label>
+                <div className="space-y-1">
+                  {editingItem.files.map((f, i) => (
+                    <div key={i} className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-700/50 rounded-lg text-sm">
+                      <span>{f.type === 'image' ? '🖼️' : '📄'}</span>
+                      <span className="flex-1 truncate">{f.name}</span>
+                      <span className="text-xs text-gray-400">{formatFileSize(f.size)}</span>
+                      <button
+                        className="text-red-400 hover:text-red-600 text-xs"
+                        onClick={() => removeUploadedFile(i)}
+                      >✕</button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* 待上传文件列表 */}
+            {pendingFiles.length > 0 && (
+              <div>
+                <label className="text-sm font-medium mb-1 block">待上传文件（可自定义名称）</label>
+                <div className="space-y-2">
+                  {pendingFiles.map((pf, i) => (
+                    <div key={i} className="flex items-center gap-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-sm">
+                      <span>{pf.file.type.startsWith('image/') ? '🖼️' : '📄'}</span>
+                      <input
+                        className="input text-xs py-1 flex-1 min-w-0"
+                        value={pf.customName}
+                        onChange={(e) => updatePendingFileName(i, e.target.value)}
+                        placeholder="自定义文件名"
+                      />
+                      <span className="text-xs text-gray-400 shrink-0">{formatFileSize(pf.file.size)}</span>
+                      <button
+                        className="text-red-400 hover:text-red-600 text-xs shrink-0"
+                        onClick={() => removePendingFile(i)}
+                      >✕</button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div>
               <label className="text-sm font-medium mb-1 block">使用状态</label>
               <select className="input" value={editingItem.status} onChange={(e) => setEditingItem({ ...editingItem, status: e.target.value as MaterialItem['status'] })}>
@@ -308,7 +490,9 @@ export default function Material() {
             </div>
             <div className="flex justify-end gap-2">
               <button className="btn-secondary" onClick={() => { setItemModalOpen(false); setEditingItem(null); }}>取消</button>
-              <button className="btn-primary" onClick={(e) => { e.preventDefault(); e.stopPropagation(); saveItem(); }}>保存</button>
+              <button className="btn-primary" onClick={(e) => { e.preventDefault(); e.stopPropagation(); saveItem(); }} disabled={uploading}>
+                {uploading ? '上传中...' : '保存'}
+              </button>
             </div>
           </div>
         )}

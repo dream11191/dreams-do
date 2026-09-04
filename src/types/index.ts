@@ -94,6 +94,15 @@ export interface StudyProject {
 export type MaterialStatus = 'collected' | 'planned' | 'used';
 export type MaterialType = 'design' | 'editing' | 'tech' | 'life' | 'other';
 
+export interface MaterialFile {
+  name: string;
+  originalName: string;
+  path: string;
+  url: string;
+  type: 'image' | 'document';
+  size: number;
+}
+
 export interface MaterialItem {
   id: string;
   title: string;
@@ -102,7 +111,7 @@ export interface MaterialItem {
   tags: Tag[];
   content: string;
   links: string[];
-  imageUrls: string[];
+  files: MaterialFile[];
   status: MaterialStatus;
   createdAt: string;
   updatedAt: string;
@@ -118,6 +127,7 @@ export interface MaterialFolder {
 export interface QuickNote {
   id: string;
   content: string;
+  color: string;
   createdAt: string;
 }
 
@@ -152,6 +162,7 @@ export interface TransactionRecord {
 export interface AppSettings {
   darkMode: boolean;
   userName: string;
+  avatar: string;
   backgroundImage: string;
 }
 

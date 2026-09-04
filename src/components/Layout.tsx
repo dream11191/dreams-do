@@ -1,8 +1,10 @@
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { globalSearch } from '../db';
+import { supabase } from '../supabase/client';
+import { generateId } from '../utils';
 
 const navItems = [
   { path: '/', label: '仪表盘', icon: '📊' },
@@ -14,7 +16,7 @@ const navItems = [
 ];
 
 export default function Layout() {
-  const { darkMode, toggleDarkMode, backgroundImage, setBackgroundImage } = useTheme();
+  const { darkMode, toggleDarkMode, backgroundImage, setBackgroundImage, userName, setUserName, avatar, setAvatar } = useTheme();
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -26,6 +28,9 @@ export default function Layout() {
   const [bgInput, setBgInput] = useState(backgroundImage);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
+  const [nicknameInput, setNicknameInput] = useState(userName);
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (searchQuery.length >= 2) {
@@ -69,7 +74,7 @@ export default function Layout() {
         <button className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700" onClick={toggleDarkMode}>
           {darkMode ? '☀️' : '🌙'}
         </button>
-        <button className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 ml-1" onClick={() => { setBgInput(backgroundImage); setSettingsOpen(true); }}>
+        <button className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 ml-1" onClick={() => { setBgInput(backgroundImage); setNicknameInput(userName); setSettingsOpen(true); }}>
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -78,11 +83,17 @@ export default function Layout() {
         {user ? (
           <div className="flex items-center gap-1 ml-1 relative">
             <button
-              className="flex items-center gap-1 p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-xs"
+              className="flex items-center gap-1.5 p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-xs"
               onClick={() => setUserMenuOpen(!userMenuOpen)}
             >
-              <span className="hidden sm:inline text-gray-500 dark:text-gray-400">{user.email}</span>
-              <span className="text-lg">👤</span>
+              {avatar ? (
+                <img src={avatar} alt="头像" className="w-7 h-7 rounded-full object-cover border border-gray-300 dark:border-gray-600" />
+              ) : (
+                <span className="w-7 h-7 rounded-full bg-primary-100 dark:bg-primary-900/40 flex items-center justify-center text-primary-600 dark:text-primary-400 font-bold text-sm">
+                  {(userName || '同').charAt(0)}
+                </span>
+              )}
+              <span className="hidden sm:inline text-gray-600 dark:text-gray-300">{userName || '同学'}</span>
             </button>
             {userMenuOpen && (
               <>
@@ -90,7 +101,7 @@ export default function Layout() {
                 <div className="absolute right-0 top-full mt-1 w-40 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-20 py-1">
                   <button
                     className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700"
-                    onClick={() => { setUserMenuOpen(false); setSettingsOpen(true); }}
+                    onClick={() => { setUserMenuOpen(false); setBgInput(backgroundImage); setNicknameInput(userName); setSettingsOpen(true); }}
                   >⚙️ 个人设置</button>
                   <button
                     className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 text-red-500"
@@ -187,6 +198,82 @@ export default function Layout() {
               </button>
             </div>
             <div className="p-4 space-y-5">
+              {/* 头像 */}
+              <div>
+                <div className="font-medium text-sm mb-2">个人头像</div>
+                <div className="flex items-center gap-3">
+                  {avatar ? (
+                    <img src={avatar} alt="头像" className="w-16 h-16 rounded-full object-cover border-2 border-gray-200 dark:border-gray-600" />
+                  ) : (
+                    <span className="w-16 h-16 rounded-full bg-primary-100 dark:bg-primary-900/40 flex items-center justify-center text-primary-600 dark:text-primary-400 font-bold text-2xl">
+                      {(nicknameInput || '同').charAt(0)}
+                    </span>
+                  )}
+                  <div className="flex-1 space-y-2">
+                    <input
+                      ref={avatarInputRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        setAvatarUploading(true);
+                        try {
+                          const ext = file.name.split('.').pop() || 'png';
+                          const path = `avatars/${generateId()}.${ext}`;
+                          const { error } = await supabase.storage
+                            .from('materials')
+                            .upload(path, file, { upsert: true });
+                          if (error) {
+                            console.error('Avatar upload error:', error);
+                            alert('头像上传失败: ' + error.message);
+                            return;
+                          }
+                          const { data: urlData } = supabase.storage
+                            .from('materials')
+                            .getPublicUrl(path);
+                          setAvatar(urlData.publicUrl);
+                        } finally {
+                          setAvatarUploading(false);
+                        }
+                      }}
+                    />
+                    <button
+                      className="btn-secondary btn-sm"
+                      onClick={() => avatarInputRef.current?.click()}
+                      disabled={avatarUploading}
+                    >
+                      {avatarUploading ? '上传中...' : '📁 上传头像'}
+                    </button>
+                    {avatar && (
+                      <button
+                        className="btn-danger btn-sm ml-2"
+                        onClick={() => setAvatar('')}
+                      >清除头像</button>
+                    )}
+                    <p className="text-xs text-gray-400">支持 JPG、PNG 等图片格式</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* 昵称 */}
+              <div>
+                <div className="font-medium text-sm mb-2">个人昵称</div>
+                <div className="flex gap-2">
+                  <input
+                    className="input flex-1 text-sm"
+                    value={nicknameInput}
+                    onChange={(e) => setNicknameInput(e.target.value)}
+                    placeholder="请输入昵称"
+                  />
+                  <button
+                    className="btn-primary btn-sm"
+                    onClick={() => { setUserName(nicknameInput.trim() || '同学'); }}
+                  >保存</button>
+                </div>
+              </div>
+
               {/* 暗色模式 */}
               <div className="flex items-center justify-between">
                 <div>

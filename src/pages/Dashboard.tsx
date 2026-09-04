@@ -15,6 +15,7 @@ export default function Dashboard() {
   const [dailyTaskData, setDailyTaskData] = useState<{ date: string; 刷题任务: number; 日程事务: number; 美工剪辑: number; 生活记账: number }[]>([]);
   const [quickNotes, setQuickNotes] = useState<QuickNote[]>([]);
   const [newNote, setNewNote] = useState('');
+  const [noteColor, setNoteColor] = useState('#6366f1');
 
   useEffect(() => {
     loadData();
@@ -103,7 +104,7 @@ export default function Dashboard() {
 
   const addQuickNote = async () => {
     if (!newNote.trim()) return;
-    const note: QuickNote = { id: '', content: newNote.trim(), createdAt: new Date().toISOString() };
+    const note: QuickNote = { id: '', content: newNote.trim(), color: noteColor, createdAt: new Date().toISOString() };
     note.id = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substr(2, 9);
     await quickNoteDB.save(note);
     setNewNote('');
@@ -263,6 +264,15 @@ export default function Dashboard() {
       <div className="card">
         <h3 className="font-semibold mb-3">💡 灵感速记板</h3>
         <div className="flex gap-2 mb-3">
+          <div className="relative">
+            <input
+              type="color"
+              value={noteColor}
+              onChange={(e) => setNoteColor(e.target.value)}
+              className="w-10 h-10 rounded-lg border border-gray-300 dark:border-gray-600 cursor-pointer"
+              title="选择文字颜色"
+            />
+          </div>
           <input
             className="input flex-1 text-sm"
             placeholder="记录一闪而过的灵感..."
@@ -278,7 +288,7 @@ export default function Dashboard() {
           <div className="space-y-2 max-h-60 overflow-y-auto">
             {quickNotes.map((note) => (
               <div key={note.id} className="flex items-start justify-between p-2 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-                <p className="text-sm flex-1">{note.content}</p>
+                <p className="text-sm flex-1" style={{ color: note.color || '#6366f1' }}>{note.content}</p>
                 <button onClick={() => deleteNote(note.id)} className="text-gray-400 hover:text-red-500 ml-2 text-xs">✕</button>
               </div>
             ))}
