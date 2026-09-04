@@ -140,6 +140,12 @@ CREATE TABLE material_items (
 ALTER TABLE material_items ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users can CRUD own material_items" ON material_items FOR ALL USING (auth.uid() = user_id);
 
+-- 如果 material_items 表已存在但缺少列，执行以下迁移：
+-- ALTER TABLE material_items ADD COLUMN IF NOT EXISTS "files" JSONB DEFAULT '[]';
+-- ALTER TABLE material_items ADD COLUMN IF NOT EXISTS "links" JSONB DEFAULT '[]';
+-- ALTER TABLE material_items ADD COLUMN IF NOT EXISTS "tags" JSONB DEFAULT '[]';
+-- ALTER TABLE material_items ADD COLUMN IF NOT EXISTS "content" TEXT DEFAULT '';
+
 -- 速记
 CREATE TABLE quick_notes (
   id TEXT PRIMARY KEY,
