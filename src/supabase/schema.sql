@@ -173,6 +173,10 @@ CREATE TABLE settings (
 ALTER TABLE settings ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users can CRUD own settings" ON settings FOR ALL USING (auth.uid() = user_id);
 
+-- 如果 settings 表已存在但缺少 avatar/backgroundImage 列，执行以下迁移：
+-- ALTER TABLE settings ADD COLUMN IF NOT EXISTS "avatar" TEXT DEFAULT '';
+-- ALTER TABLE settings ADD COLUMN IF NOT EXISTS "backgroundImage" TEXT DEFAULT '';
+
 -- 生日
 CREATE TABLE birthdays (
   id TEXT PRIMARY KEY,
