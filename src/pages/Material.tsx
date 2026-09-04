@@ -58,8 +58,15 @@ export default function Material() {
   const loadItems = async (folderId: string) => {
     const data = await materialItemDB.getByFolder(folderId);
     const safeData = Array.isArray(data) ? data : [];
-    setItems(safeData.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()));
+    setItems(safeData.map(normalizeItem).sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()));
   };
+
+  const normalizeItem = (item: MaterialItem): MaterialItem => ({
+    ...item,
+    files: Array.isArray(item.files) ? item.files : [],
+    links: Array.isArray(item.links) ? item.links : [],
+    tags: Array.isArray(item.tags) ? item.tags : [],
+  });
 
   const openNewFolder = () => {
     setEditingFolder(createMaterialFolder({}));
@@ -89,7 +96,7 @@ export default function Material() {
   };
 
   const openEditItem = (item: MaterialItem) => {
-    setEditingItem({ ...item, files: Array.isArray(item.files) ? item.files : [], links: Array.isArray(item.links) ? item.links : [], tags: Array.isArray(item.tags) ? item.tags : [] });
+    setEditingItem(normalizeItem(item));
     setPendingFiles([]);
     setItemModalOpen(true);
   };
@@ -177,9 +184,10 @@ export default function Material() {
   };
 
   const changeStatus = async (item: MaterialItem, status: MaterialItem['status']) => {
-    item.status = status;
-    item.updatedAt = new Date().toISOString();
-    await materialItemDB.save(item);
+    const normalized = normalizeItem(item);
+    normalized.status = status;
+    normalized.updatedAt = new Date().toISOString();
+    await materialItemDB.save(normalized);
     if (selectedFolder) loadItems(selectedFolder.id);
   };
 
@@ -406,7 +414,7 @@ export default function Material() {
               <textarea
                 className="input"
                 rows={2}
-                value={editingItem.links.join('\n')}
+                value={(editingItem.links || []).join('\n')}
                 onChange={(e) => setEditingItem({ ...editingItem, links: e.target.value.split('\n').filter(Boolean) })}
                 placeholder="https://..."
               />

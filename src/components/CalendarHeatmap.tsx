@@ -187,8 +187,8 @@ export default function CalendarHeatmap({ projectId }: CalendarHeatmapProps) {
         </div>
       </div>
 
-      <div className="heatmap-container">
-        <div className="heatmap-wrapper relative inline-block min-w-full">
+      <div className="heatmap-container overflow-x-auto -mx-2 px-2" style={{ WebkitOverflowScrolling: 'touch' }}>
+        <div className="heatmap-wrapper relative inline-block" style={{ minWidth: '750px' }}>
           <div className="flex mb-1" style={{ paddingLeft: '24px' }}>
             <div className="relative flex-1" style={{ height: '16px' }}>
               {monthLabels.map((ml, i) => (
