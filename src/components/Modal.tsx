@@ -37,6 +37,18 @@ function isMobileDevice(): boolean {
   return window.matchMedia('(pointer: coarse)').matches || window.innerWidth < 768;
 }
 
+function clampPosition(x: number, y: number): { x: number; y: number } {
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  const margin = 40;
+  const maxX = vw / 2 - margin;
+  const maxY = vh / 2 - margin;
+  return {
+    x: Math.max(-maxX, Math.min(maxX, x)),
+    y: Math.max(-maxY, Math.min(maxY, y)),
+  };
+}
+
 export default function Modal({ open, onClose, title, children, maxWidth = 'max-w-lg' }: ModalProps) {
   const [dragging, setDragging] = useState(false);
   const [pos, setPos] = useState({ x: 0, y: 0 });
@@ -52,7 +64,7 @@ export default function Modal({ open, onClose, title, children, maxWidth = 'max-
     if (open) {
       document.body.style.overflow = 'hidden';
       const saved = getSavedPosition(title);
-      setPos(saved);
+      setPos(clampPosition(saved.x, saved.y));
     } else {
       document.body.style.overflow = '';
     }
@@ -72,14 +84,14 @@ export default function Modal({ open, onClose, title, children, maxWidth = 'max-
     if (!dragging || isMobile) return;
     const dx = e.clientX - dragStart.current.x;
     const dy = e.clientY - dragStart.current.y;
-    const newX = dragStart.current.posX + dx;
-    const newY = dragStart.current.posY + dy;
-    setPos({ x: newX, y: newY });
+    setPos({ x: dragStart.current.posX + dx, y: dragStart.current.posY + dy });
   }, [dragging, isMobile]);
 
   const handlePointerUp = useCallback(() => {
     if (dragging) {
-      savePosition(title, pos.x, pos.y);
+      const clamped = clampPosition(pos.x, pos.y);
+      setPos(clamped);
+      savePosition(title, clamped.x, clamped.y);
     }
     setDragging(false);
   }, [dragging, title, pos.x, pos.y]);
@@ -89,7 +101,7 @@ export default function Modal({ open, onClose, title, children, maxWidth = 'max-
   const canDrag = !isMobile;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center p-4 pt-12 sm:pt-20 overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
       <div
         ref={modalRef}
