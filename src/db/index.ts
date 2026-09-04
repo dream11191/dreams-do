@@ -206,7 +206,7 @@ export async function pullCloudToLocal(): Promise<void> {
   for (const storeName of Object.keys(TABLE_MAP)) {
     const cloudItems = await cloudGetAll(storeName);
     console.log(`pullCloudToLocal: ${storeName} has ${cloudItems?.length ?? 0} cloud items`);
-    if (cloudItems !== null && cloudItems.length > 0) {
+    if (cloudItems !== null && Array.isArray(cloudItems) && cloudItems.length > 0) {
       await db.clear(storeName);
       const tx = db.transaction(storeName, 'readwrite');
       for (const item of cloudItems) {
@@ -226,10 +226,12 @@ export async function pullCloudToLocal(): Promise<void> {
 // 合并本地和云端数据，按 id 去重，优先保留 updatedAt 较新的
 function mergeData<T>(local: T[], cloud: T[]): T[] {
   const map = new Map<string, T>();
-  for (const item of local) {
+  const safeLocal = Array.isArray(local) ? local : [];
+  const safeCloud = Array.isArray(cloud) ? cloud : [];
+  for (const item of safeLocal) {
     map.set((item as Record<string, unknown>).id as string, item);
   }
-  for (const item of cloud) {
+  for (const item of safeCloud) {
     const id = (item as Record<string, unknown>).id as string;
     const existing = map.get(id);
     if (!existing) {
@@ -248,17 +250,18 @@ function mergeData<T>(local: T[], cloud: T[]): T[] {
 // 带同步的通用操作
 async function syncedGetAll<T>(storeName: string): Promise<T[]> {
   const local = await localGetAll<T>(storeName);
+  const safeLocal = Array.isArray(local) ? local : [];
   const userId = await getUserId();
-  console.log(`syncedGetAll: ${storeName} local=${local.length}, userId=${userId}`);
+  console.log(`syncedGetAll: ${storeName} local=${safeLocal.length}, userId=${userId}`);
   if (userId) {
     const cloud = await cloudGetAll<T>(storeName);
-    if (cloud !== null) {
-      const merged = mergeData(local, cloud);
-      console.log(`syncedGetAll: ${storeName} merged=${merged.length} (local=${local.length}, cloud=${cloud.length})`);
-      return merged;
+    if (cloud !== null && Array.isArray(cloud)) {
+      const merged = mergeData(safeLocal, cloud);
+      console.log(`syncedGetAll: ${storeName} merged=${merged.length} (local=${safeLocal.length}, cloud=${cloud.length})`);
+      return merged.filter(Boolean);
     }
   }
-  return local.filter(Boolean);
+  return safeLocal.filter(Boolean);
 }
 
 async function syncedGetOne<T>(storeName: string, id: string): Promise<T | undefined> {
@@ -294,14 +297,15 @@ async function syncedRemove(storeName: string, id: string): Promise<void> {
 
 async function syncedGetByIndex<T>(storeName: string, indexName: string, value: string): Promise<T[]> {
   const local = await localGetByIndex<T>(storeName, indexName, value);
+  const safeLocal = Array.isArray(local) ? local : [];
   const userId = await getUserId();
   if (userId) {
     const cloud = await cloudGetByIndex<T>(storeName, indexName, value);
-    if (cloud !== null) {
-      return mergeData(local, cloud);
+    if (cloud !== null && Array.isArray(cloud)) {
+      return mergeData(safeLocal, cloud).filter(Boolean);
     }
   }
-  return local.filter(Boolean);
+  return safeLocal.filter(Boolean);
 }
 
 // ==================== 日程 CRUD ====================

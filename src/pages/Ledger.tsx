@@ -537,7 +537,7 @@ export default function Ledger() {
             <div>
               <label className="text-sm font-medium mb-1 block">图标颜色</label>
               <div className="flex gap-2 flex-wrap">
-                {['#6366f1','#10b981','#f59e0b','#ef4444','#3b82f6','#8b5cf6','#ec4899','#06b6d4','#84cc16','#f97316'].map((color) => (
+                {['#84cc16','#10b981','#f59e0b','#ef4444','#3b82f6','#8b5cf6','#ec4899','#06b6d4','#a3e635','#f97316'].map((color) => (
                   <button
                     key={color}
                     className="w-8 h-8 rounded-full border-2"

@@ -1,9 +1,26 @@
+@import url('https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --color-primary: #6366f1;
+  --color-primary: #84cc16;
+  --color-primary-light: #a3e635;
+  --color-primary-dark: #65a30d;
+  --color-bg: #fefce8;
+  --color-card: #ffffff;
+  --color-border: #ecfccb;
+  --color-text: #365314;
+  --color-text-muted: #65a30d;
+}
+
+.dark {
+  --color-bg: #1a2e05;
+  --color-card: #1e3a08;
+  --color-border: #365314;
+  --color-text: #ecfccb;
+  --color-text-muted: #84cc16;
 }
 
 body {
@@ -11,6 +28,7 @@ body {
     'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.3s ease;
 }
 
 * {
@@ -29,38 +47,38 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: #bef264;
   border-radius: 2px;
 }
 
 .dark ::-webkit-scrollbar-thumb {
-  background: #475569;
+  background: #4d7c0f;
 }
 
 @layer components {
   .btn-primary {
-    @apply bg-primary-500 text-white px-4 py-2 rounded-lg hover:bg-primary-600 active:bg-primary-700 transition-colors font-medium;
+    @apply bg-primary-500 text-white px-4 py-2 rounded-xl hover:bg-primary-600 active:bg-primary-700 transition-all duration-200 font-medium shadow-sm hover:shadow-md active:scale-95;
   }
   .btn-secondary {
-    @apply bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors font-medium;
+    @apply bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 px-4 py-2 rounded-xl hover:bg-primary-100 dark:hover:bg-primary-900/50 transition-all duration-200 font-medium active:scale-95;
   }
   .btn-danger {
-    @apply bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors font-medium;
+    @apply bg-red-400 text-white px-4 py-2 rounded-xl hover:bg-red-500 transition-all duration-200 font-medium shadow-sm hover:shadow-md active:scale-95;
   }
   .btn-sm {
-    @apply px-2.5 py-1 text-sm rounded-md;
+    @apply px-2.5 py-1 text-sm rounded-lg;
   }
   .card {
-    @apply bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-4;
+    @apply bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-primary-100 dark:border-primary-900/30 p-4 transition-all duration-200 hover:shadow-md;
   }
   body.has-bg .card {
-    @apply bg-white/75 dark:bg-gray-800/75 backdrop-blur-sm;
+    @apply bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm;
   }
   body.has-bg .card.bg-gradient-to-r {
     @apply backdrop-blur-none;
   }
   .input {
-    @apply w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all;
+    @apply w-full px-3 py-2.5 border border-primary-200 dark:border-primary-800 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-400 focus:border-transparent outline-none transition-all duration-200;
   }
   .badge {
     @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium;
@@ -72,6 +90,115 @@ body {
     @apply bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400;
   }
   .badge-low {
-    @apply bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400;
+    @apply bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400;
+  }
+}
+
+/* ==================== 日历热力图样式 ==================== */
+
+.heatmap-container {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.heatmap-container::-webkit-scrollbar {
+  display: none;
+}
+
+.heatmap-cell {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+@media (max-width: 640px) {
+  .heatmap-cell {
+    width: 11px;
+    height: 11px;
+    border-radius: 2px;
+  }
+}
+
+.heatmap-cell:hover {
+  transform: scale(1.5);
+  z-index: 10;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.heatmap-tooltip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #365314;
+  color: #ecfccb;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 20;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.heatmap-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 4px solid transparent;
+  border-top-color: #365314;
+}
+
+.heatmap-month-label {
+  font-size: 10px;
+  fill: #65a30d;
+}
+
+.dark .heatmap-month-label {
+  fill: #a3e635;
+}
+
+.heatmap-day-label {
+  font-size: 9px;
+  fill: #84cc16;
+}
+
+.dark .heatmap-day-label {
+  fill: #bef264;
+}
+
+/* ==================== 响应式增强 ==================== */
+
+@media (max-width: 640px) {
+  .card {
+    @apply p-3 rounded-xl;
+  }
+  .btn-primary, .btn-secondary {
+    @apply px-3 py-1.5 text-sm rounded-lg;
+  }
+  h2 {
+    font-size: 1.1rem !important;
+  }
+  .input {
+    @apply px-2.5 py-2 text-sm;
+  }
+}
+
+/* 触屏设备增强 */
+@media (hover: none) and (pointer: coarse) {
+  .btn-primary:active, .btn-secondary:active, .btn-danger:active {
+    transform: scale(0.95);
+  }
+}
+
+/* 安全区域适配 */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
   }
 }

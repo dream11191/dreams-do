@@ -57,7 +57,7 @@ export default function Layout() {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
           </svg>
         </button>
-        <h1 className="text-lg font-bold text-primary-600 dark:text-primary-400">生活助手</h1>
+        <h1 className="text-lg font-bold text-primary-600 dark:text-primary-400">🌿 生活助手</h1>
 
         <div className="flex-1" />
 
@@ -113,7 +113,7 @@ export default function Layout() {
           </div>
         ) : (
           <button
-            className="ml-1 px-3 py-1.5 text-xs bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition"
+            className="ml-1 px-3 py-1.5 text-xs bg-primary-500 hover:bg-primary-600 text-white rounded-lg transition"
             onClick={() => navigate('/auth')}
           >
             登录同步

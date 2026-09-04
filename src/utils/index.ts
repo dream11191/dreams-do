@@ -95,7 +95,7 @@ export function createAccount(partial: Partial<Account>): Account {
     name: '',
     balance: 0,
     icon: '💰',
-    color: '#6366f1',
+    color: '#84cc16',
     note: '',
     createdAt: nowISO(),
     updatedAt: nowISO(),

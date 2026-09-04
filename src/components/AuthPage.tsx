@@ -55,7 +55,7 @@ export default function AuthPage() {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="your@email.com"
               required
-              className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition"
+              className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-400 focus:border-transparent outline-none transition"
             />
           </div>
 
@@ -70,7 +70,7 @@ export default function AuthPage() {
               placeholder="至少6位"
               required
               minLength={6}
-              className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition"
+              className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-400 focus:border-transparent outline-none transition"
             />
           </div>
 
@@ -83,7 +83,7 @@ export default function AuthPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-xl transition disabled:opacity-50 flex items-center justify-center gap-2"
+            className="w-full py-2.5 bg-primary-500 hover:bg-primary-600 text-white font-medium rounded-xl transition disabled:opacity-50 flex items-center justify-center gap-2"
           >
             {loading && (
               <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
@@ -98,7 +98,7 @@ export default function AuthPage() {
         <div className="mt-6 text-center">
           <button
             onClick={() => { setIsLogin(!isLogin); setError(''); }}
-            className="text-indigo-600 dark:text-indigo-400 hover:underline text-sm"
+            className="text-primary-600 dark:text-primary-400 hover:underline text-sm"
           >
             {isLogin ? '没有账号？去注册' : '已有账号？去登录'}
           </button>

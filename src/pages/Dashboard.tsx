@@ -5,7 +5,7 @@ import { formatDate, isOverdue, getWeekRange, daysUntil } from '../utils';
 import { Link } from 'react-router-dom';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
-const COLORS = ['#6366f1', '#e5e7eb', '#ef4444', '#f59e0b', '#10b981'];
+const COLORS = ['#84cc16', '#d9f99d', '#ef4444', '#f59e0b', '#10b981'];
 
 export default function Dashboard() {
   const [todaySchedules, setTodaySchedules] = useState<ScheduleItem[]>([]);
@@ -15,7 +15,7 @@ export default function Dashboard() {
   const [dailyTaskData, setDailyTaskData] = useState<{ date: string; 刷题任务: number; 日程事务: number; 美工剪辑: number; 生活记账: number }[]>([]);
   const [quickNotes, setQuickNotes] = useState<QuickNote[]>([]);
   const [newNote, setNewNote] = useState('');
-  const [noteColor, setNoteColor] = useState('#6366f1');
+  const [noteColor, setNoteColor] = useState('#84cc16');
 
   useEffect(() => {
     loadData();
@@ -198,7 +198,7 @@ export default function Dashboard() {
             <XAxis dataKey="name" tick={{ fontSize: 12 }} stroke="#9ca3af" />
             <YAxis tick={{ fontSize: 12 }} stroke="#9ca3af" />
             <Tooltip />
-            <Bar dataKey="完成" fill="#6366f1" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="完成" fill="#84cc16" radius={[4, 4, 0, 0]} />
             <Bar dataKey="学习时长" fill="#f59e0b" radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
@@ -288,7 +288,7 @@ export default function Dashboard() {
           <div className="space-y-2 max-h-60 overflow-y-auto">
             {quickNotes.map((note) => (
               <div key={note.id} className="flex items-start justify-between p-2 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-                <p className="text-sm flex-1" style={{ color: note.color || '#6366f1' }}>{note.content}</p>
+                <p className="text-sm flex-1" style={{ color: note.color || '#84cc16' }}>{note.content}</p>
                 <button onClick={() => deleteNote(note.id)} className="text-gray-400 hover:text-red-500 ml-2 text-xs">✕</button>
               </div>
             ))}

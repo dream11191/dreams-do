@@ -7,7 +7,7 @@ interface TagSelectorProps {
   onChange: (tags: Tag[]) => void;
 }
 
-const presetColors = ['#6366f1', '#ef4444', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#ec4899', '#06b6d4'];
+const presetColors = ['#84cc16', '#ef4444', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#ec4899', '#06b6d4'];
 
 export default function TagSelector({ tags, onChange }: TagSelectorProps) {
   const [inputValue, setInputValue] = useState('');

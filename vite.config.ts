@@ -14,7 +14,7 @@ export default defineConfig({
         name: '生活助手 - 一站式个人管理',
         short_name: '生活助手',
         description: '集日程提醒、表格记账、学习打卡、素材收藏于一体的个人管理应用',
-        theme_color: '#6366f1',
+        theme_color: '#84cc16',
         background_color: '#ffffff',
         display: 'standalone',
         orientation: 'any',

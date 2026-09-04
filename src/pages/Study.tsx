@@ -4,9 +4,10 @@ import type { StudyProject, StudyTask, MaterialItem, TaskMaterialLink } from '..
 import { createStudyProject, createStudyTask, createTaskMaterialLink, formatDate, formatTime, isOverdue, generateId, parseCSV } from '../utils';
 import Modal from '../components/Modal';
 import TagSelector from '../components/TagSelector';
+import CalendarHeatmap from '../components/CalendarHeatmap';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts';
 
-const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16'];
+const COLORS = ['#84cc16', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#a3e635'];
 
 export default function Study() {
   const [projects, setProjects] = useState<StudyProject[]>([]);
@@ -357,7 +358,10 @@ export default function Study() {
       {/* 统计看板 */}
       {selectedProject && view === 'stats' && stats && (
         <div className="space-y-6">
-          <div className="grid grid-cols-4 gap-3">
+          {/* 日历热力图 */}
+          <CalendarHeatmap projectId={selectedProject.id} />
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <div className="card text-center">
               <div className="text-2xl font-bold text-primary-600">{stats.completed}</div>
               <div className="text-xs text-gray-500">已完成</div>
@@ -385,8 +389,8 @@ export default function Study() {
               <ResponsiveContainer width="100%" height={250}>
                 <PieChart>
                   <Pie data={[{ name: '已完成', value: stats.completed }, { name: '未完成', value: stats.total - stats.completed }]} cx="50%" cy="50%" innerRadius={60} outerRadius={90} paddingAngle={5} dataKey="value" label={({ name, value }) => `${name}: ${value}`}>
-                    <Cell fill="#6366f1" />
-                    <Cell fill="#e5e7eb" />
+                    <Cell fill="#84cc16" />
+                    <Cell fill="#d9f99d" />
                   </Pie>
                   <Tooltip />
                 </PieChart>
@@ -405,7 +409,7 @@ export default function Study() {
                   <YAxis tick={{ fontSize: 11 }} stroke="#9ca3af" />
                   <Tooltip />
                   <Legend />
-                  <Bar dataKey="完成" fill="#6366f1" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="完成" fill="#84cc16" radius={[4, 4, 0, 0]} />
                   <Bar dataKey="时长" fill="#f59e0b" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
@@ -422,7 +426,7 @@ export default function Study() {
                   <XAxis dataKey="date" tick={{ fontSize: 10 }} stroke="#9ca3af" />
                   <YAxis tick={{ fontSize: 11 }} stroke="#9ca3af" />
                   <Tooltip />
-                  <Line type="monotone" dataKey="累计" stroke="#6366f1" strokeWidth={2} dot={{ r: 3 }} />
+                  <Line type="monotone" dataKey="累计" stroke="#84cc16" strokeWidth={2} dot={{ r: 3 }} />
                 </LineChart>
               </ResponsiveContainer>
             </div>

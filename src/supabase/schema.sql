@@ -66,7 +66,7 @@ CREATE TABLE accounts (
   name TEXT NOT NULL,
   balance REAL DEFAULT 0,
   icon TEXT DEFAULT '💰',
-  color TEXT DEFAULT '#6366f1',
+  color TEXT DEFAULT '#84cc16',
   note TEXT,
   "createdAt" TEXT,
   "updatedAt" TEXT,

@@ -51,13 +51,14 @@ export default function Material() {
 
   const loadFolders = async () => {
     const data = await materialFolderDB.getAll();
-    setFolders(data);
-    if (data.length > 0 && !selectedFolder) setSelectedFolder(data[0]);
+    setFolders(Array.isArray(data) ? data : []);
+    if (Array.isArray(data) && data.length > 0 && !selectedFolder) setSelectedFolder(data[0]);
   };
 
   const loadItems = async (folderId: string) => {
     const data = await materialItemDB.getByFolder(folderId);
-    setItems(data.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()));
+    const safeData = Array.isArray(data) ? data : [];
+    setItems(safeData.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()));
   };
 
   const openNewFolder = () => {
@@ -181,14 +182,15 @@ export default function Material() {
   };
 
   const filteredItems = items.filter((item) => {
+    if (!item) return false;
     if (filterStatus !== 'all' && item.status !== filterStatus) return false;
     if (filterType !== 'all' && item.type !== filterType) return false;
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
-      const matchTitle = item.title.toLowerCase().includes(q);
-      const matchContent = item.content.toLowerCase().includes(q);
-      const matchTags = item.tags.some((t) => t.name.toLowerCase().includes(q));
-      const matchFiles = item.files.some((f) => f.name.toLowerCase().includes(q) || f.originalName.toLowerCase().includes(q));
+      const matchTitle = (item.title || '').toLowerCase().includes(q);
+      const matchContent = (item.content || '').toLowerCase().includes(q);
+      const matchTags = (item.tags || []).some((t) => t && t.name && t.name.toLowerCase().includes(q));
+      const matchFiles = (item.files || []).some((f) => f && ((f.name || '').toLowerCase().includes(q) || (f.originalName || '').toLowerCase().includes(q)));
       if (!matchTitle && !matchContent && !matchTags && !matchFiles) return false;
     }
     return true;
@@ -270,9 +272,9 @@ export default function Material() {
             {filteredItems.map((item) => (
               <div key={item.id} className="card hover:shadow-md transition-shadow">
                 {/* 图片预览 */}
-                {item.files.filter((f) => f.type === 'image').length > 0 && (
+                {(item.files || []).filter((f) => f && f.type === 'image').length > 0 && (
                   <div className="mb-3 -mx-4 -mt-4 rounded-t-xl overflow-hidden">
-                    <img src={item.files.filter((f) => f.type === 'image')[0].url} alt={item.title} className="w-full h-32 object-cover" />
+                    <img src={(item.files || []).filter((f) => f && f.type === 'image')[0].url} alt={item.title} className="w-full h-32 object-cover" />
                   </div>
                 )}
                 <div className="flex items-start justify-between">
@@ -288,9 +290,9 @@ export default function Material() {
 
                 {item.content && <p className="text-xs text-gray-500 mt-2 line-clamp-2">{item.content}</p>}
 
-                {item.links.length > 0 && (
+                {(item.links || []).length > 0 && (
                   <div className="mt-2 space-y-1">
-                    {item.links.map((link, i) => (
+                    {(item.links || []).map((link, i) => (
                       <a key={i} href={link} target="_blank" rel="noopener noreferrer" className="text-xs text-primary-500 hover:underline block truncate">
                         🔗 {link}
                       </a>
@@ -299,9 +301,9 @@ export default function Material() {
                 )}
 
                 {/* 文件列表 */}
-                {item.files.length > 0 && (
+                {(item.files || []).length > 0 && (
                   <div className="mt-2 space-y-1">
-                    {item.files.map((f, i) => (
+                    {(item.files || []).map((f, i) => (
                       <a
                         key={i}
                         href={f.url}
@@ -317,9 +319,9 @@ export default function Material() {
                   </div>
                 )}
 
-                {item.tags.length > 0 && (
+                {(item.tags || []).length > 0 && (
                   <div className="flex gap-1 mt-2 flex-wrap">
-                    {item.tags.map((t) => (
+                    {(item.tags || []).map((t) => (
                       <span key={t.id} className="badge text-white text-[10px]" style={{ backgroundColor: t.color }}>{t.name}</span>
                     ))}
                   </div>
@@ -432,11 +434,11 @@ export default function Material() {
             </div>
 
             {/* 已上传的文件列表 */}
-            {editingItem.files.length > 0 && (
+            {(editingItem.files || []).length > 0 && (
               <div>
                 <label className="text-sm font-medium mb-1 block">已上传文件</label>
                 <div className="space-y-1">
-                  {editingItem.files.map((f, i) => (
+                  {(editingItem.files || []).map((f, i) => (
                     <div key={i} className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-700/50 rounded-lg text-sm">
                       <span>{f.type === 'image' ? '🖼️' : '📄'}</span>
                       <span className="flex-1 truncate">{f.name}</span>
