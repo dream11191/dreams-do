@@ -61,6 +61,11 @@ export interface Account {
 export type TaskStatus = 'pending' | 'completed';
 export type TaskDifficulty = 'easy' | 'medium' | 'hard';
 
+export interface StudyLink {
+  name: string;
+  url: string;
+}
+
 export interface StudyTask {
   id: string;
   projectId: string;
@@ -68,7 +73,7 @@ export interface StudyTask {
   startTime: string;
   deadlineTime: string;
   status: TaskStatus;
-  solutionLinks: string[];
+  solutionLinks: StudyLink[];
   errorNotes?: string;
   masteryLevel?: number; // 1-5
   difficulty: TaskDifficulty;

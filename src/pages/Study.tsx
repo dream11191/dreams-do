@@ -47,7 +47,16 @@ export default function Study() {
 
   const loadTasks = async (projectId: string) => {
     const data = await studyTaskDB.getByProject(projectId);
-    setTasks(data.sort((a, b) => new Date(a.deadlineTime).getTime() - new Date(b.deadlineTime).getTime()));
+    const safeData = (Array.isArray(data) ? data : []).map((t: StudyTask) => ({
+      ...t,
+      solutionLinks: (t.solutionLinks || []).map((l: unknown) => {
+        if (typeof l === 'string') return { name: '', url: l };
+        if (l && typeof l === 'object' && 'url' in (l as Record<string, unknown>)) return l as StudyTask['solutionLinks'][0];
+        return { name: '', url: '' };
+      }).filter((l: StudyTask['solutionLinks'][0]) => l.url),
+      tags: Array.isArray(t.tags) ? t.tags : [],
+    }));
+    setTasks(safeData.sort((a, b) => new Date(a.deadlineTime).getTime() - new Date(b.deadlineTime).getTime()));
   };
 
   const openNewProject = () => {
@@ -327,7 +336,7 @@ export default function Study() {
                     {task.solutionLinks && task.solutionLinks.length > 0 && (
                       <div className="flex gap-1 mt-1 flex-wrap">
                         {task.solutionLinks.map((link, i) => (
-                          <a key={i} href={link} target="_blank" rel="noopener noreferrer" className="text-xs text-primary-500 hover:underline">🔗 链接{i + 1}</a>
+                          <a key={i} href={link.url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary-500 hover:underline">🔗 {link.name || '链接' + (i + 1)}</a>
                         ))}
                       </div>
                     )}
@@ -355,7 +364,7 @@ export default function Study() {
                       className={`text-sm ${task.favorite ? 'text-yellow-500' : 'text-gray-400 hover:text-yellow-500'}`}
                       onClick={() => { task.favorite = !task.favorite; task.updatedAt = new Date().toISOString(); studyTaskDB.save(task); loadTasks(selectedProject!.id); }}
                       title={task.favorite ? '取消收藏' : '收藏'}
-                    >⭐</button>
+                    >{task.favorite ? '⭐' : '☆'}</button>
                     <button className="btn-secondary btn-sm" onClick={() => openEditTask(task)}>✏️</button>
                     <button className="btn-secondary btn-sm" onClick={() => setLinkMaterialOpen(task.id)}>🔗</button>
                     <button className="btn-danger btn-sm" onClick={() => deleteTask(task.id)}>🗑</button>
@@ -525,8 +534,47 @@ export default function Study() {
               </div>
             </div>
             <div>
-              <label className="text-sm font-medium mb-1 block">题解链接（每行一个）</label>
-              <textarea className="input" rows={3} value={(editingTask.solutionLinks || []).join('\n')} onChange={(e) => setEditingTask({ ...editingTask, solutionLinks: e.target.value.split('\n').filter(Boolean) })} placeholder="https://..." />
+              <label className="text-sm font-medium mb-1 block">题解链接</label>
+              <div className="space-y-2">
+                {(editingTask.solutionLinks || []).map((link, i) => (
+                  <div key={i} className="flex gap-2 items-start">
+                    <input
+                      className="input flex-1 text-sm"
+                      placeholder="链接名称"
+                      value={link.name}
+                      onChange={(e) => {
+                        const updated = [...(editingTask.solutionLinks || [])];
+                        updated[i] = { ...updated[i], name: e.target.value };
+                        setEditingTask({ ...editingTask, solutionLinks: updated });
+                      }}
+                    />
+                    <input
+                      className="input flex-[2] text-sm"
+                      placeholder="https://..."
+                      value={link.url}
+                      onChange={(e) => {
+                        const updated = [...(editingTask.solutionLinks || [])];
+                        updated[i] = { ...updated[i], url: e.target.value };
+                        setEditingTask({ ...editingTask, solutionLinks: updated });
+                      }}
+                    />
+                    <button
+                      className="btn-secondary btn-sm text-red-400 hover:text-red-600 shrink-0"
+                      onClick={() => {
+                        const updated = (editingTask.solutionLinks || []).filter((_, j) => j !== i);
+                        setEditingTask({ ...editingTask, solutionLinks: updated });
+                      }}
+                    >✕</button>
+                  </div>
+                ))}
+                <button
+                  className="btn-secondary btn-sm text-xs"
+                  onClick={() => {
+                    const updated = [...(editingTask.solutionLinks || []), { name: '', url: '' }];
+                    setEditingTask({ ...editingTask, solutionLinks: updated });
+                  }}
+                >+ 添加链接</button>
+              </div>
             </div>
             <div>
               <label className="text-sm font-medium mb-1 block">错题笔记</label>
