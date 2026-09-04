@@ -21,6 +21,7 @@ export default function Study() {
   const [editingTask, setEditingTask] = useState<StudyTask | null>(null);
   const [linkMaterialOpen, setLinkMaterialOpen] = useState<string | null>(null); // taskId
   const [view, setView] = useState<'tasks' | 'stats'>('tasks');
+  const [showFavorites, setShowFavorites] = useState(false);
   const [csvImportOpen, setCsvImportOpen] = useState(false);
   const [csvData, setCsvData] = useState<Record<string, string>[]>([]);
   const [csvPreviewOpen, setCsvPreviewOpen] = useState(false);
@@ -272,7 +273,15 @@ export default function Study() {
           )}
 
           <div className="flex justify-between items-center">
-            <span className="text-sm text-gray-500">{tasks.length} 个任务</span>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-500">{tasks.length} 个任务</span>
+              <button
+                className={`text-xs px-2 py-0.5 rounded-full transition-colors ${showFavorites ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' : 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400'}`}
+                onClick={() => setShowFavorites(!showFavorites)}
+              >
+                ⭐ 收藏
+              </button>
+            </div>
             <div className="flex gap-2">
               <label className="btn-secondary btn-sm cursor-pointer">
                 📥 批量导入
@@ -284,7 +293,7 @@ export default function Study() {
 
           {/* 任务列表 */}
           <div className="space-y-2">
-            {tasks.filter(Boolean).map((task) => {
+            {tasks.filter(Boolean).filter(t => !showFavorites || t.favorite).map((task) => {
               const linkedMaterials = getLinkedMaterials(task.id);
               return (
                 <div
@@ -315,8 +324,12 @@ export default function Study() {
                         <span className="text-red-500 font-medium">已逾期</span>
                       )}
                     </div>
-                    {task.solutionLink && (
-                      <a href={task.solutionLink} target="_blank" rel="noopener noreferrer" className="text-xs text-primary-500 hover:underline mt-1 block">🔗 题解链接</a>
+                    {task.solutionLinks && task.solutionLinks.length > 0 && (
+                      <div className="flex gap-1 mt-1 flex-wrap">
+                        {task.solutionLinks.map((link, i) => (
+                          <a key={i} href={link} target="_blank" rel="noopener noreferrer" className="text-xs text-primary-500 hover:underline">🔗 链接{i + 1}</a>
+                        ))}
+                      </div>
                     )}
                     {task.errorNotes && <p className="text-xs text-gray-500 mt-1">{task.errorNotes}</p>}
                     {task.tags.length > 0 && (
@@ -338,11 +351,11 @@ export default function Study() {
                     )}
                   </div>
                   <div className="flex gap-1 flex-col">
-                    {task.status === 'pending' ? (
-                      <button className="btn-primary btn-sm" onClick={() => toggleTask(task)}>✅ 完成</button>
-                    ) : (
-                      <button className="btn-secondary btn-sm" onClick={() => toggleTask(task)}>↩ 撤销</button>
-                    )}
+                    <button
+                      className={`text-sm ${task.favorite ? 'text-yellow-500' : 'text-gray-400 hover:text-yellow-500'}`}
+                      onClick={() => { task.favorite = !task.favorite; task.updatedAt = new Date().toISOString(); studyTaskDB.save(task); loadTasks(selectedProject!.id); }}
+                      title={task.favorite ? '取消收藏' : '收藏'}
+                    >⭐</button>
                     <button className="btn-secondary btn-sm" onClick={() => openEditTask(task)}>✏️</button>
                     <button className="btn-secondary btn-sm" onClick={() => setLinkMaterialOpen(task.id)}>🔗</button>
                     <button className="btn-danger btn-sm" onClick={() => deleteTask(task.id)}>🗑</button>
@@ -512,8 +525,8 @@ export default function Study() {
               </div>
             </div>
             <div>
-              <label className="text-sm font-medium mb-1 block">题解链接</label>
-              <input className="input" value={editingTask.solutionLink || ''} onChange={(e) => setEditingTask({ ...editingTask, solutionLink: e.target.value })} placeholder="https://..." />
+              <label className="text-sm font-medium mb-1 block">题解链接（每行一个）</label>
+              <textarea className="input" rows={3} value={(editingTask.solutionLinks || []).join('\n')} onChange={(e) => setEditingTask({ ...editingTask, solutionLinks: e.target.value.split('\n').filter(Boolean) })} placeholder="https://..." />
             </div>
             <div>
               <label className="text-sm font-medium mb-1 block">错题笔记</label>

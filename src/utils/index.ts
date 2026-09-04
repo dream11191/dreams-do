@@ -127,6 +127,8 @@ export function createStudyTask(partial: Partial<StudyTask>): StudyTask {
     status: 'pending',
     difficulty: 'medium',
     tags: [],
+    solutionLinks: [],
+    favorite: false,
     createdAt: now,
     updatedAt: now,
     ...partial,

@@ -68,11 +68,12 @@ export interface StudyTask {
   startTime: string;
   deadlineTime: string;
   status: TaskStatus;
-  solutionLink?: string;
+  solutionLinks: string[];
   errorNotes?: string;
   masteryLevel?: number; // 1-5
   difficulty: TaskDifficulty;
   tags: Tag[];
+  favorite?: boolean;
   duration?: number; // 学习时长(分钟)
   completedAt?: string;
   createdAt: string;

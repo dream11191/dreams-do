@@ -98,10 +98,12 @@ CREATE TABLE study_tasks (
   "deadlineTime" TEXT,
   status TEXT DEFAULT 'pending',
   "solutionLink" TEXT,
+  "solutionLinks" JSONB DEFAULT '[]',
   "errorNotes" TEXT,
   "masteryLevel" INTEGER,
   difficulty TEXT DEFAULT 'medium',
   tags JSONB DEFAULT '[]',
+  "favorite" BOOLEAN DEFAULT false,
   duration INTEGER,
   "completedAt" TEXT,
   "createdAt" TEXT,
@@ -110,6 +112,10 @@ CREATE TABLE study_tasks (
 );
 ALTER TABLE study_tasks ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users can CRUD own study_tasks" ON study_tasks FOR ALL USING (auth.uid() = user_id);
+
+-- 如果 study_tasks 表已存在但缺少列，执行以下迁移：
+-- ALTER TABLE study_tasks ADD COLUMN IF NOT EXISTS "solutionLinks" JSONB DEFAULT '[]';
+-- ALTER TABLE study_tasks ADD COLUMN IF NOT EXISTS "favorite" BOOLEAN DEFAULT false;
 
 -- 素材文件夹
 CREATE TABLE material_folders (
