@@ -8,33 +8,9 @@ interface ModalProps {
   maxWidth?: string;
 }
 
-const POS_STORAGE_KEY = 'modal_positions';
-
-function loadPositions(): Record<string, { x: number; y: number }> {
-  try {
-    const raw = localStorage.getItem(POS_STORAGE_KEY);
-    return raw ? JSON.parse(raw) : {};
-  } catch {
-    return {};
-  }
-}
-
-function savePosition(title: string, x: number, y: number) {
-  try {
-    const all = loadPositions();
-    all[title] = { x, y };
-    localStorage.setItem(POS_STORAGE_KEY, JSON.stringify(all));
-  } catch { /* ignore */ }
-}
-
-function getSavedPosition(title: string): { x: number; y: number } {
-  const all = loadPositions();
-  return all[title] || { x: 0, y: 0 };
-}
-
 function isMobileDevice(): boolean {
   if (typeof window === 'undefined') return false;
-  return window.matchMedia('(pointer: coarse)').matches || window.innerWidth < 768;
+  return window.innerWidth < 768;
 }
 
 function clampPosition(x: number, y: number): { x: number; y: number } {
@@ -54,51 +30,53 @@ export default function Modal({ open, onClose, title, children, maxWidth = 'max-
   const [pos, setPos] = useState({ x: 0, y: 0 });
   const dragStart = useRef({ x: 0, y: 0, posX: 0, posY: 0 });
   const modalRef = useRef<HTMLDivElement>(null);
-  const [isMobile, setIsMobile] = useState(true);
+  const isMobile = useRef(false);
 
   useEffect(() => {
-    setIsMobile(isMobileDevice());
+    isMobile.current = isMobileDevice();
   }, []);
 
   useEffect(() => {
     if (open) {
       document.body.style.overflow = 'hidden';
-      const saved = getSavedPosition(title);
-      setPos(clampPosition(saved.x, saved.y));
+      setPos({ x: 0, y: 0 });
     } else {
       document.body.style.overflow = '';
     }
     return () => { document.body.style.overflow = ''; };
-  }, [open, title]);
+  }, [open]);
 
   const handlePointerDown = useCallback((e: React.PointerEvent) => {
-    if (isMobile) return;
+    if (isMobile.current) return;
     const target = e.target as HTMLElement;
     if (target.closest('button, input, select, textarea')) return;
     setDragging(true);
-    dragStart.current = { x: e.clientX, y: e.clientY, posX: pos.x, posY: pos.y };
+    dragStart.current = { x: e.clientX, y: e.clientY, posX: 0, posY: 0 };
+    setPos((prev) => {
+      dragStart.current.posX = prev.x;
+      dragStart.current.posY = prev.y;
+      return prev;
+    });
     (e.target as HTMLElement).setPointerCapture(e.pointerId);
-  }, [pos.x, pos.y, isMobile]);
+  }, []);
 
   const handlePointerMove = useCallback((e: React.PointerEvent) => {
-    if (!dragging || isMobile) return;
+    if (!dragging || isMobile.current) return;
     const dx = e.clientX - dragStart.current.x;
     const dy = e.clientY - dragStart.current.y;
-    setPos({ x: dragStart.current.posX + dx, y: dragStart.current.posY + dy });
-  }, [dragging, isMobile]);
+    setPos({
+      x: dragStart.current.posX + dx,
+      y: dragStart.current.posY + dy,
+    });
+  }, [dragging]);
 
   const handlePointerUp = useCallback(() => {
-    if (dragging) {
-      const clamped = clampPosition(pos.x, pos.y);
-      setPos(clamped);
-      savePosition(title, clamped.x, clamped.y);
-    }
     setDragging(false);
-  }, [dragging, title, pos.x, pos.y]);
+  }, []);
 
   if (!open) return null;
 
-  const canDrag = !isMobile;
+  const canDrag = !isMobile.current;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
