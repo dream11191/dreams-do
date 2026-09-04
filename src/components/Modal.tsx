@@ -1,4 +1,5 @@
 import { ReactNode, useEffect, useState, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 
 interface ModalProps {
   open: boolean;
@@ -78,7 +79,7 @@ export default function Modal({ open, onClose, title, children, maxWidth = 'max-
 
   const canDrag = !isMobile.current;
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
       <div
@@ -107,6 +108,7 @@ export default function Modal({ open, onClose, title, children, maxWidth = 'max-
         </div>
         <div className="p-4 overflow-y-auto">{children}</div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
