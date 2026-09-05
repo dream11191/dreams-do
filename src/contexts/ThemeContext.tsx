@@ -71,17 +71,26 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       document.body.style.backgroundImage = '';
       document.body.classList.remove('has-bg');
     }
-    settingsDB.get().then((s) => settingsDB.save({ ...s, backgroundImage: url }));
+    settingsDB.get().then((s) => {
+      s.backgroundImage = url;
+      settingsDB.save(s);
+    });
   }, []);
 
   const setUserName = useCallback((name: string) => {
     setUserNameState(name);
-    settingsDB.get().then((s) => settingsDB.save({ ...s, userName: name }));
+    settingsDB.get().then((s) => {
+      s.userName = name;
+      settingsDB.save(s);
+    });
   }, []);
 
   const setAvatar = useCallback((url: string) => {
     setAvatarState(url);
-    settingsDB.get().then((s) => settingsDB.save({ ...s, avatar: url }));
+    settingsDB.get().then((s) => {
+      s.avatar = url;
+      settingsDB.save(s);
+    });
   }, []);
 
   return (

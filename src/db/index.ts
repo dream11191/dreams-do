@@ -415,9 +415,9 @@ export const settingsDB = {
       if (cloud) {
         return {
           darkMode: cloud.darkMode ?? localSettings.darkMode,
-          userName: cloud.userName ?? localSettings.userName,
-          avatar: cloud.avatar ?? localSettings.avatar,
-          backgroundImage: cloud.backgroundImage ?? localSettings.backgroundImage,
+          userName: cloud.userName || localSettings.userName,
+          avatar: cloud.avatar || localSettings.avatar,
+          backgroundImage: cloud.backgroundImage || localSettings.backgroundImage,
         };
       }
     }
