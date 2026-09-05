@@ -22,6 +22,7 @@ export default function Study() {
   const [linkMaterialOpen, setLinkMaterialOpen] = useState<string | null>(null); // taskId
   const [view, setView] = useState<'tasks' | 'stats'>('tasks');
   const [showFavorites, setShowFavorites] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'completed' | 'overdue'>('all');
   const [csvImportOpen, setCsvImportOpen] = useState(false);
   const [csvData, setCsvData] = useState<Record<string, string>[]>([]);
   const [csvPreviewOpen, setCsvPreviewOpen] = useState(false);
@@ -285,11 +286,25 @@ export default function Study() {
             <div className="flex items-center gap-2">
               <span className="text-sm text-gray-500">{tasks.length} 个任务</span>
               <button
+                className={`text-xs px-2 py-0.5 rounded-full transition-colors ${statusFilter === 'all' ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400' : 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400'}`}
+                onClick={() => setStatusFilter('all')}
+              >全部</button>
+              <button
+                className={`text-xs px-2 py-0.5 rounded-full transition-colors ${statusFilter === 'pending' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' : 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400'}`}
+                onClick={() => setStatusFilter('pending')}
+              >未完成</button>
+              <button
+                className={`text-xs px-2 py-0.5 rounded-full transition-colors ${statusFilter === 'completed' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400'}`}
+                onClick={() => setStatusFilter('completed')}
+              >已完成</button>
+              <button
+                className={`text-xs px-2 py-0.5 rounded-full transition-colors ${statusFilter === 'overdue' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' : 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400'}`}
+                onClick={() => setStatusFilter('overdue')}
+              >已逾期</button>
+              <button
                 className={`text-xs px-2 py-0.5 rounded-full transition-colors ${showFavorites ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' : 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400'}`}
                 onClick={() => setShowFavorites(!showFavorites)}
-              >
-                ⭐ 收藏
-              </button>
+              >⭐ 收藏</button>
             </div>
             <div className="flex gap-2">
               <label className="btn-secondary btn-sm cursor-pointer">
@@ -302,7 +317,13 @@ export default function Study() {
 
           {/* 任务列表 */}
           <div className="space-y-2">
-            {tasks.filter(Boolean).filter(t => !showFavorites || t.favorite).map((task) => {
+            {tasks.filter(Boolean).filter(t => {
+                if (showFavorites && !t.favorite) return false;
+                if (statusFilter === 'pending') return t.status === 'pending' && !isOverdue(t.deadlineTime);
+                if (statusFilter === 'completed') return t.status === 'completed';
+                if (statusFilter === 'overdue') return t.status === 'pending' && isOverdue(t.deadlineTime);
+                return true;
+              }).map((task) => {
               const linkedMaterials = getLinkedMaterials(task.id);
               return (
                 <div
