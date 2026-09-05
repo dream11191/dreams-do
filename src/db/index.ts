@@ -219,7 +219,14 @@ export async function pullCloudToLocal(): Promise<void> {
   // 同步设置
   const cloudSettings = await cloudGetOne<AppSettings>('settings', 'app');
   if (cloudSettings) {
-    await localPut('settings', { ...cloudSettings, id: 'app' });
+    const localSettings = await localGetOne<AppSettings & { id: string }>('settings', 'app');
+    await localPut('settings', {
+      id: 'app',
+      darkMode: cloudSettings.darkMode ?? localSettings?.darkMode ?? false,
+      userName: cloudSettings.userName || localSettings?.userName || '同学',
+      avatar: cloudSettings.avatar || localSettings?.avatar || '',
+      backgroundImage: cloudSettings.backgroundImage || localSettings?.backgroundImage || '',
+    });
   }
   console.log('pullCloudToLocal: done');
 }

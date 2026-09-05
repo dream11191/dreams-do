@@ -42,8 +42,27 @@ export default function Study() {
 
   const loadProjects = async () => {
     const data = await studyProjectDB.getAll();
-    setProjects(data);
-    if (data.length > 0 && !selectedProject) setSelectedProject(data[0]);
+    const allTasks = await studyTaskDB.getAll();
+    const validTasks = Array.isArray(allTasks) ? allTasks.filter(Boolean) : [];
+    const projectDeadlineMap = new Map<string, number>();
+    for (const task of validTasks) {
+      if (task.projectId && task.status === 'pending' && task.deadlineTime) {
+        const ts = new Date(task.deadlineTime).getTime();
+        if (!projectDeadlineMap.has(task.projectId) || ts < projectDeadlineMap.get(task.projectId)!) {
+          projectDeadlineMap.set(task.projectId, ts);
+        }
+      }
+    }
+    const sorted = [...data].sort((a, b) => {
+      const da = projectDeadlineMap.get(a.id);
+      const db2 = projectDeadlineMap.get(b.id);
+      if (da && db2) return da - db2;
+      if (da) return -1;
+      if (db2) return 1;
+      return 0;
+    });
+    setProjects(sorted);
+    if (sorted.length > 0 && !selectedProject) setSelectedProject(sorted[0]);
   };
 
   const loadTasks = async (projectId: string) => {

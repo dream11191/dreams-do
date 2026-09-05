@@ -27,8 +27,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (session?.user?.email) {
         setUser({ email: session.user.email });
         console.log('AuthContext: session loaded, syncing data...');
-        await pushLocalToCloud();
         await pullCloudToLocal();
+        await pushLocalToCloud();
         console.log('AuthContext: sync complete');
       }
       setLoading(false);
