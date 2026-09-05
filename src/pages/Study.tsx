@@ -134,6 +134,7 @@ export default function Study() {
     setTaskModalOpen(false);
     setEditingTask(null);
     if (selectedProject) loadTasks(selectedProject.id);
+    loadProjects();
   };
 
   const toggleTask = async (task: StudyTask) => {
@@ -146,12 +147,14 @@ export default function Study() {
     }
     await studyTaskDB.save(task);
     if (selectedProject) loadTasks(selectedProject.id);
+    loadProjects();
   };
 
   const deleteTask = async (id: string) => {
     if (!confirm('确定删除此任务？')) return;
     await studyTaskDB.delete(id);
     if (selectedProject) loadTasks(selectedProject.id);
+    loadProjects();
   };
 
   const linkMaterial = async (taskId: string, materialId: string) => {
@@ -206,6 +209,7 @@ export default function Study() {
     setCsvPreviewOpen(false);
     setCsvData([]);
     loadTasks(selectedProject.id);
+    loadProjects();
   };
 
   const getLinkedMaterials = (taskId: string) => {
