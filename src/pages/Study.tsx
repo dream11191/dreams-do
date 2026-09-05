@@ -57,7 +57,15 @@ export default function Study() {
       }).filter((l: StudyTask['solutionLinks'][0]) => l.url),
       tags: Array.isArray(t.tags) ? t.tags : [],
     }));
-    setTasks(safeData.sort((a, b) => new Date(a.deadlineTime).getTime() - new Date(b.deadlineTime).getTime()));
+    setTasks(safeData.sort((a, b) => {
+      if (a.status !== b.status) {
+        return a.status === 'pending' ? -1 : 1;
+      }
+      if (a.status === 'pending') {
+        return new Date(a.deadlineTime).getTime() - new Date(b.deadlineTime).getTime();
+      }
+      return new Date(b.completedAt || b.updatedAt).getTime() - new Date(a.completedAt || a.updatedAt).getTime();
+    }));
   };
 
   const openNewProject = () => {
