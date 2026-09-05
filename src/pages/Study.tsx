@@ -47,8 +47,8 @@ export default function Study() {
   };
 
   const loadTasks = async (projectId: string) => {
-    const data = await studyTaskDB.getByProject(projectId);
-    const safeData = (Array.isArray(data) ? data : []).map((t: StudyTask) => ({
+    const data = (await studyTaskDB.getByProject(projectId)) || [];
+    const safeData = (Array.isArray(data) ? data : []).filter(Boolean).map((t: StudyTask) => ({
       ...t,
       solutionLinks: (t.solutionLinks || []).map((l: unknown) => {
         if (typeof l === 'string') return { name: '', url: l };
@@ -197,13 +197,13 @@ export default function Study() {
   // 统计数据
   const projectStats = () => {
     if (!selectedProject) return null;
-    const completed = tasks.filter((t) => t.status === 'completed').length;
-    const total = tasks.length;
-    const totalDuration = tasks.reduce((sum, t) => sum + (t.duration || 0), 0);
+    const validTasks = tasks.filter(Boolean);
+    const completed = validTasks.filter((t) => t.status === 'completed').length;
+    const total = validTasks.length;
+    const totalDuration = validTasks.reduce((sum, t) => sum + (t.duration || 0), 0);
 
-    // 每周统计
     const weekMap: Record<string, { completed: number; duration: number }> = {};
-    tasks.filter((t) => t.status === 'completed' && t.completedAt).forEach((t) => {
+    validTasks.filter((t) => t.status === 'completed' && t.completedAt).forEach((t) => {
       const d = new Date(t.completedAt!);
       const weekStart = new Date(d);
       weekStart.setDate(d.getDate() - d.getDay());
@@ -214,9 +214,8 @@ export default function Study() {
     });
     const weeklyData = Object.entries(weekMap).map(([k, v]) => ({ name: k.slice(5), 完成: v.completed, 时长: v.duration })).sort((a, b) => a.name.localeCompare(b.name));
 
-    // 标签统计
     const tagMap: Record<string, { completed: number; total: number }> = {};
-    tasks.forEach((t) => {
+    validTasks.forEach((t) => {
       t.tags.forEach((tag) => {
         if (!tagMap[tag.name]) tagMap[tag.name] = { completed: 0, total: 0 };
         tagMap[tag.name].total += 1;
@@ -225,8 +224,7 @@ export default function Study() {
     });
     const tagData = Object.entries(tagMap).map(([k, v], i) => ({ name: k, 已完成: v.completed, 未完成: v.total - v.completed, color: COLORS[i % COLORS.length] }));
 
-    // 累计趋势
-    const sortedCompleted = tasks.filter((t) => t.status === 'completed' && t.completedAt).sort((a, b) => new Date(a.completedAt!).getTime() - new Date(b.completedAt!).getTime());
+    const sortedCompleted = validTasks.filter((t) => t.status === 'completed' && t.completedAt).sort((a, b) => new Date(a.completedAt!).getTime() - new Date(b.completedAt!).getTime());
     let cumulative = 0;
     const trendData = sortedCompleted.map((t) => {
       cumulative += 1;
