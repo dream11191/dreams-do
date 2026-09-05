@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { studyProjectDB, studyTaskDB, taskMaterialLinkDB, materialItemDB } from '../db';
 import type { StudyProject, StudyTask, MaterialItem, TaskMaterialLink } from '../types';
 import { createStudyProject, createStudyTask, createTaskMaterialLink, formatDate, formatTime, isOverdue, generateId, parseCSV } from '../utils';
@@ -23,13 +24,15 @@ export default function Study() {
   const [view, setView] = useState<'tasks' | 'stats'>('tasks');
   const [showFavorites, setShowFavorites] = useState(false);
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'completed' | 'overdue'>('all');
+  const [searchParams] = useSearchParams();
   const [csvImportOpen, setCsvImportOpen] = useState(false);
   const [csvData, setCsvData] = useState<Record<string, string>[]>([]);
   const [csvPreviewOpen, setCsvPreviewOpen] = useState(false);
   const [importing, setImporting] = useState(false);
 
   useEffect(() => {
-    loadProjects();
+    const urlProjectId = searchParams.get('projectId');
+    loadProjects(urlProjectId);
     materialItemDB.getAll().then(setMaterials);
   }, []);
 
@@ -40,7 +43,7 @@ export default function Study() {
     }
   }, [selectedProject]);
 
-  const loadProjects = async () => {
+  const loadProjects = async (initialProjectId?: string | null) => {
     const data = await studyProjectDB.getAll();
     const allTasks = await studyTaskDB.getAll();
     const validTasks = Array.isArray(allTasks) ? allTasks.filter(Boolean) : [];
@@ -62,7 +65,10 @@ export default function Study() {
       return 0;
     });
     setProjects(sorted);
-    if (sorted.length > 0 && !selectedProject) setSelectedProject(sorted[0]);
+    if (sorted.length > 0 && !selectedProject) {
+      const target = initialProjectId ? sorted.find((p) => p.id === initialProjectId) : null;
+      setSelectedProject(target || sorted[0]);
+    }
   };
 
   const loadTasks = async (projectId: string) => {

@@ -177,14 +177,24 @@ export default function Dashboard() {
             <Link to="/overdue" className="text-xs text-red-500 hover:underline">查看全部</Link>
           </h3>
           <div className="space-y-2">
-            {overdueTasks.map((item) => (
-              <div key={item.id} className="p-2 bg-red-50 dark:bg-red-900/10 rounded-lg">
-                <div className="text-sm font-medium text-red-700 dark:text-red-400">{(item as ScheduleItem).title || (item as StudyTask).name}</div>
-                <div className="text-xs text-red-500">
-                  逾期 {Math.abs(daysUntil((item as ScheduleItem).deadlineTime || (item as StudyTask).deadlineTime))} 天
-                </div>
-              </div>
-            ))}
+            {overdueTasks.map((item) => {
+              const isStudyTask = 'projectId' in item;
+              const linkTo = isStudyTask
+                ? `/study?projectId=${(item as StudyTask).projectId}`
+                : '/schedule';
+              return (
+                <Link
+                  key={item.id}
+                  to={linkTo}
+                  className="block p-2 bg-red-50 dark:bg-red-900/10 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/20 transition-colors cursor-pointer"
+                >
+                  <div className="text-sm font-medium text-red-700 dark:text-red-400">{(item as ScheduleItem).title || (item as StudyTask).name}</div>
+                  <div className="text-xs text-red-500">
+                    逾期 {Math.abs(daysUntil((item as ScheduleItem).deadlineTime || (item as StudyTask).deadlineTime))} 天
+                  </div>
+                </Link>
+              );
+            })}
           </div>
         </div>
       )}
