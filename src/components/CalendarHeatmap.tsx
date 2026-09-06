@@ -180,7 +180,7 @@ export default function CalendarHeatmap({ projectId }: CalendarHeatmapProps) {
   }
 
   return (
-    <div className="card overflow-hidden">
+    <div className="card">
       <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
         <h3 className="font-semibold">🔥 学习打卡热力图</h3>
         <div className="flex items-center gap-1.5 text-xs">
@@ -199,11 +199,12 @@ export default function CalendarHeatmap({ projectId }: CalendarHeatmapProps) {
         </div>
       </div>
 
-      <div className="overflow-x-auto w-full" style={{ WebkitOverflowScrolling: 'touch' }}>
-        <div
-          className="heatmap-wrapper relative inline-block"
-          style={{ minWidth: `${totalCols * COL_STEP + 24}px` }}
-        >
+      <div className="w-full" style={{ display: 'grid', minWidth: 0 }}>
+        <div className="overflow-x-auto" style={{ minWidth: 0, WebkitOverflowScrolling: 'touch' }}>
+          <div
+            className="heatmap-wrapper relative inline-block"
+            style={{ minWidth: `${totalCols * COL_STEP + 24}px` }}
+          >
           {/* 月份标签 */}
           <div className="flex mb-1" style={{ paddingLeft: '24px' }}>
             <div className="relative" style={{ height: '16px', width: `${totalCols * COL_STEP}px` }}>
@@ -293,6 +294,7 @@ export default function CalendarHeatmap({ projectId }: CalendarHeatmapProps) {
           </div>
         </div>
       </div>
+    </div>
     </div>
   );
 }
