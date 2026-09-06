@@ -8,8 +8,6 @@ import TagSelector from '../components/TagSelector';
 import CalendarHeatmap from '../components/CalendarHeatmap';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts';
 
-const COLORS = ['#84cc16', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#a3e635'];
-
 export default function Study() {
   const [projects, setProjects] = useState<StudyProject[]>([]);
   const [selectedProject, setSelectedProject] = useState<StudyProject | null>(null);
@@ -262,16 +260,6 @@ export default function Study() {
     });
     const weeklyData = Object.entries(weekMap).map(([k, v]) => ({ name: k.slice(5), 完成: v.completed, 时长: v.duration })).sort((a, b) => a.name.localeCompare(b.name));
 
-    const tagMap: Record<string, { completed: number; total: number }> = {};
-    validTasks.forEach((t) => {
-      (t.tags || []).forEach((tag) => {
-        if (!tagMap[tag.name]) tagMap[tag.name] = { completed: 0, total: 0 };
-        tagMap[tag.name].total += 1;
-        if (t.status === 'completed') tagMap[tag.name].completed += 1;
-      });
-    });
-    const tagData = Object.entries(tagMap).map(([k, v], i) => ({ name: k, 已完成: v.completed, 未完成: v.total - v.completed, color: COLORS[i % COLORS.length] }));
-
     const sortedCompleted = validTasks.filter((t) => t.status === 'completed' && t.completedAt).sort((a, b) => new Date(a.completedAt!).getTime() - new Date(b.completedAt!).getTime());
     let cumulative = 0;
     const trendData = sortedCompleted.map((t) => {
@@ -279,7 +267,7 @@ export default function Study() {
       return { date: formatDate(t.completedAt!), 累计: cumulative };
     });
 
-    return { completed, total, totalDuration, weeklyData, tagData, trendData };
+    return { completed, total, totalDuration, weeklyData, trendData };
   };
 
   const stats = globalStats();
@@ -454,7 +442,7 @@ export default function Study() {
 
       {/* 统计看板 */}
       {view === 'stats' && stats && (
-        <div className="space-y-6">
+        <div className="space-y-6 pb-8">
           {/* 日历热力图 */}
           <CalendarHeatmap />
 
@@ -525,23 +513,6 @@ export default function Study() {
                   <Tooltip />
                   <Line type="monotone" dataKey="累计" stroke="#84cc16" strokeWidth={2} dot={{ r: 3 }} />
                 </LineChart>
-              </ResponsiveContainer>
-            </div>
-          )}
-
-          {/* 分类统计 */}
-          {stats.tagData.length > 0 && (
-            <div className="card">
-              <h3 className="font-semibold mb-3">标签分类统计</h3>
-              <ResponsiveContainer width="100%" height={250}>
-                <PieChart>
-                  <Pie data={stats.tagData} cx="50%" cy="50%" outerRadius={90} dataKey="已完成" nameKey="name" label={({ name, 已完成 }) => `${name}: ${已完成}`}>
-                    {stats.tagData.map((entry, i) => (
-                      <Cell key={i} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
               </ResponsiveContainer>
             </div>
           )}
