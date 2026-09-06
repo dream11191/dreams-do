@@ -14,6 +14,7 @@ export default function Study() {
   const [projects, setProjects] = useState<StudyProject[]>([]);
   const [selectedProject, setSelectedProject] = useState<StudyProject | null>(null);
   const [tasks, setTasks] = useState<StudyTask[]>([]);
+  const [allTasks, setAllTasks] = useState<StudyTask[]>([]);
   const [materials, setMaterials] = useState<MaterialItem[]>([]);
   const [links, setLinks] = useState<TaskMaterialLink[]>([]);
   const [projectModalOpen, setProjectModalOpen] = useState(false);
@@ -33,6 +34,7 @@ export default function Study() {
   useEffect(() => {
     const urlProjectId = searchParams.get('projectId');
     loadProjects(urlProjectId);
+    loadAllTasks();
     materialItemDB.getAll().then(setMaterials);
   }, []);
 
@@ -69,6 +71,20 @@ export default function Study() {
       const target = initialProjectId ? sorted.find((p) => p.id === initialProjectId) : null;
       setSelectedProject(target || sorted[0]);
     }
+  };
+
+  const loadAllTasks = async () => {
+    const data = await studyTaskDB.getAll();
+    const safeData = (Array.isArray(data) ? data : []).filter(Boolean).map((t: StudyTask) => ({
+      ...t,
+      solutionLinks: (t.solutionLinks || []).map((l: unknown) => {
+        if (typeof l === 'string') return { name: '', url: l };
+        if (l && typeof l === 'object' && 'url' in (l as Record<string, unknown>)) return l as StudyTask['solutionLinks'][0];
+        return { name: '', url: '' };
+      }).filter((l: StudyTask['solutionLinks'][0]) => l.url),
+      tags: Array.isArray(t.tags) ? t.tags : [],
+    }));
+    setAllTasks(safeData);
   };
 
   const loadTasks = async (projectId: string) => {
@@ -140,6 +156,7 @@ export default function Study() {
     setTaskModalOpen(false);
     setEditingTask(null);
     if (selectedProject) loadTasks(selectedProject.id);
+    loadAllTasks();
     loadProjects();
   };
 
@@ -153,6 +170,7 @@ export default function Study() {
     }
     await studyTaskDB.save(task);
     if (selectedProject) loadTasks(selectedProject.id);
+    loadAllTasks();
     loadProjects();
   };
 
@@ -160,6 +178,7 @@ export default function Study() {
     if (!confirm('确定删除此任务？')) return;
     await studyTaskDB.delete(id);
     if (selectedProject) loadTasks(selectedProject.id);
+    loadAllTasks();
     loadProjects();
   };
 
@@ -215,6 +234,7 @@ export default function Study() {
     setCsvPreviewOpen(false);
     setCsvData([]);
     loadTasks(selectedProject.id);
+    loadAllTasks();
     loadProjects();
   };
 
@@ -224,9 +244,8 @@ export default function Study() {
   };
 
   // 统计数据
-  const projectStats = () => {
-    if (!selectedProject) return null;
-    const validTasks = tasks.filter(Boolean);
+  const globalStats = () => {
+    const validTasks = allTasks.filter(Boolean);
     const completed = validTasks.filter((t) => t.status === 'completed').length;
     const total = validTasks.length;
     const totalDuration = validTasks.reduce((sum, t) => sum + (t.duration || 0), 0);
@@ -245,7 +264,7 @@ export default function Study() {
 
     const tagMap: Record<string, { completed: number; total: number }> = {};
     validTasks.forEach((t) => {
-      t.tags.forEach((tag) => {
+      (t.tags || []).forEach((tag) => {
         if (!tagMap[tag.name]) tagMap[tag.name] = { completed: 0, total: 0 };
         tagMap[tag.name].total += 1;
         if (t.status === 'completed') tagMap[tag.name].completed += 1;
@@ -263,7 +282,7 @@ export default function Study() {
     return { completed, total, totalDuration, weeklyData, tagData, trendData };
   };
 
-  const stats = projectStats();
+  const stats = globalStats();
 
   return (
     <div className="space-y-6">
@@ -418,7 +437,7 @@ export default function Study() {
                   <div className="flex gap-1 flex-col">
                     <button
                       className={`text-sm ${task.favorite ? 'text-yellow-500' : 'text-gray-400 hover:text-yellow-500'}`}
-                      onClick={() => { task.favorite = !task.favorite; task.updatedAt = new Date().toISOString(); studyTaskDB.save(task); loadTasks(selectedProject!.id); }}
+                      onClick={() => { task.favorite = !task.favorite; task.updatedAt = new Date().toISOString(); studyTaskDB.save(task); loadTasks(selectedProject!.id); loadAllTasks(); }}
                       title={task.favorite ? '取消收藏' : '收藏'}
                     >{task.favorite ? '⭐' : '☆'}</button>
                     <button className="btn-secondary btn-sm" onClick={() => openEditTask(task)}>✏️</button>
@@ -434,12 +453,12 @@ export default function Study() {
       )}
 
       {/* 统计看板 */}
-      {selectedProject && view === 'stats' && stats && (
+      {view === 'stats' && stats && (
         <div className="space-y-6">
           {/* 日历热力图 */}
-          <CalendarHeatmap projectId={selectedProject.id} />
+          <CalendarHeatmap />
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div className="card text-center">
               <div className="text-2xl font-bold text-primary-600">{stats.completed}</div>
               <div className="text-xs text-gray-500">已完成</div>
