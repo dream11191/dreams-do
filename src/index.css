@@ -33,8 +33,8 @@ body {
 
 /* 全局溢出规范：所有内容溢出使用滚动条，不得撑开布局 */
 #root {
-  overflow-x: hidden;
-  max-width: 100vw;
+  width: 100%;
+  overflow-x: clip;
 }
 
 .overflow-scroll-x {
@@ -143,19 +143,9 @@ img, video, pre, code, table {
 }
 
 .heatmap-cell {
-  width: 14px;
-  height: 14px;
   border-radius: 3px;
   transition: all 0.2s ease;
   cursor: pointer;
-}
-
-@media (max-width: 640px) {
-  .heatmap-cell {
-    width: 11px;
-    height: 11px;
-    border-radius: 2px;
-  }
 }
 
 .heatmap-cell:hover {
@@ -166,9 +156,7 @@ img, video, pre, code, table {
 
 .heatmap-tooltip {
   position: absolute;
-  bottom: calc(100% + 8px);
-  left: 50%;
-  transform: translateX(-50%);
+  transform: translate(-50%, -100%);
   background: #365314;
   color: #ecfccb;
   padding: 4px 8px;
@@ -178,6 +166,7 @@ img, video, pre, code, table {
   pointer-events: none;
   z-index: 20;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  margin-top: -6px;
 }
 
 .heatmap-tooltip::after {

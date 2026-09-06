@@ -14,6 +14,10 @@ interface CalendarHeatmapProps {
 }
 
 const DAY_LABELS = ['一', '二', '三', '四', '五', '六', '日'];
+const MONTHS = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
+const CELL_SIZE = 14;
+const CELL_GAP = 3;
+const COL_STEP = CELL_SIZE + CELL_GAP;
 
 const LIGHT_COLORS = ['#f7fee7', '#d9f99d', '#bef264', '#a3e635', '#84cc16'];
 const DARK_COLORS = ['#1e3a08', '#365314', '#4d7c0f', '#65a30d', '#84cc16'];
@@ -27,6 +31,19 @@ export default function CalendarHeatmap({ projectId }: CalendarHeatmapProps) {
   useEffect(() => {
     loadData();
   }, [projectId]);
+
+  const getLevel = (count: number): number => {
+    if (count === 0) return 0;
+    if (count <= 2) return 1;
+    if (count <= 5) return 2;
+    if (count <= 10) return 3;
+    return 4;
+  };
+
+  const getColor = (level: number): string => {
+    const colors = darkMode ? DARK_COLORS : LIGHT_COLORS;
+    return colors[level] || colors[0];
+  };
 
   const loadData = async () => {
     setLoading(true);
@@ -42,11 +59,14 @@ export default function CalendarHeatmap({ projectId }: CalendarHeatmapProps) {
         }
       }
 
-      const today = new Date();
+      const now = new Date();
+      const year = now.getFullYear();
+      const startDate = new Date(year, 0, 1);
+      const endDate = new Date(year, 11, 31);
+
       const cells: HeatmapData[] = [];
-      for (let i = 364; i >= 0; i--) {
-        const d = new Date(today);
-        d.setDate(d.getDate() - i);
+      const d = new Date(startDate);
+      while (d <= endDate) {
         const dateStr = formatDate(d.toISOString());
         const count = countMap[dateStr] || 0;
         cells.push({
@@ -54,6 +74,7 @@ export default function CalendarHeatmap({ projectId }: CalendarHeatmapProps) {
           count,
           level: getLevel(count),
         });
+        d.setDate(d.getDate() + 1);
       }
       setData(cells);
     } catch (err) {
@@ -64,83 +85,80 @@ export default function CalendarHeatmap({ projectId }: CalendarHeatmapProps) {
     }
   };
 
-  const getLevel = (count: number): number => {
-    if (count === 0) return 0;
-    if (count <= 2) return 1;
-    if (count <= 5) return 2;
-    if (count <= 10) return 3;
-    return 4;
-  };
-
-  const getColor = (level: number): string => {
-    const colors = darkMode ? DARK_COLORS : LIGHT_COLORS;
-    return colors[level] || colors[0];
-  };
+  const startDayOfWeek = useMemo(() => {
+    if (data.length === 0) return 0;
+    const d = new Date(data[0].date);
+    const dow = d.getDay() || 7;
+    return dow - 1;
+  }, [data]);
 
   const weeks = useMemo(() => {
     const result: HeatmapData[][] = [];
     if (data.length === 0) return result;
-    const firstDay = new Date(data[0].date);
-    const startDayOfWeek = firstDay.getDay() || 7;
-    const padding = startDayOfWeek === 1 ? 0 : startDayOfWeek - 1;
-    for (let i = 0; i < padding; i++) {
+
+    for (let i = 0; i < startDayOfWeek; i++) {
       if (result.length === 0) result.push([]);
       result[0].push(null as unknown as HeatmapData);
     }
+
     for (const cell of data) {
       const d = new Date(cell.date);
-      const dayOfWeek = d.getDay() || 7;
-      if (dayOfWeek === 1 || result.length === 0) {
+      const dow = d.getDay() || 7;
+      if (dow === 1 || result.length === 0) {
         result.push([]);
       }
       result[result.length - 1].push(cell);
     }
     return result;
-  }, [data]);
+  }, [data, startDayOfWeek]);
 
   const monthLabels = useMemo(() => {
     const labels: { label: string; col: number }[] = [];
-    const months = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
-    let lastMonth = -1;
-    for (let i = 0; i < data.length; i++) {
-      const d = new Date(data[i].date);
+    const seen = new Set<number>();
+    for (const cell of data) {
+      const d = new Date(cell.date);
       const m = d.getMonth();
-      if (m !== lastMonth) {
-        labels.push({ label: months[m], col: Math.floor(i / 7) });
-        lastMonth = m;
+      if (!seen.has(m)) {
+        seen.add(m);
+        const dayOfYear = Math.floor((d.getTime() - new Date(d.getFullYear(), 0, 1).getTime()) / 86400000);
+        const col = Math.floor((dayOfYear + startDayOfWeek) / 7);
+        labels.push({ label: MONTHS[m], col });
       }
     }
     return labels;
-  }, [data]);
+  }, [data, startDayOfWeek]);
 
-  const handleMouseEnter = (e: React.MouseEvent, cell: HeatmapData) => {
-    const rect = (e.target as HTMLElement).getBoundingClientRect();
-    const container = (e.target as HTMLElement).closest('.heatmap-wrapper');
-    if (container) {
-      const containerRect = container.getBoundingClientRect();
+  const todayStr = formatDate(new Date().toISOString());
+  const totalCols = weeks.length;
+
+  const handleCellEnter = (e: React.MouseEvent, cell: HeatmapData) => {
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    const wrapper = (e.currentTarget as HTMLElement).closest('.heatmap-wrapper');
+    if (wrapper) {
+      const wrapperRect = wrapper.getBoundingClientRect();
       setTooltip({
         date: cell.date,
         count: cell.count,
-        x: rect.left - containerRect.left + rect.width / 2,
-        y: rect.top - containerRect.top,
+        x: rect.left - wrapperRect.left + rect.width / 2,
+        y: rect.top - wrapperRect.top,
       });
     }
   };
 
-  const handleMouseLeave = () => {
+  const handleCellLeave = () => {
     setTooltip(null);
   };
 
   const handleTouchStart = (e: React.TouchEvent, cell: HeatmapData) => {
-    const rect = (e.target as HTMLElement).getBoundingClientRect();
-    const container = (e.target as HTMLElement).closest('.heatmap-wrapper');
-    if (container) {
-      const containerRect = container.getBoundingClientRect();
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    const wrapper = (e.currentTarget as HTMLElement).closest('.heatmap-wrapper');
+    if (wrapper) {
+      const wrapperRect = wrapper.getBoundingClientRect();
       setTooltip({
         date: cell.date,
         count: cell.count,
-        x: rect.left - containerRect.left + rect.width / 2,
-        y: rect.top - containerRect.top,
+        x: rect.left - wrapperRect.left + rect.width / 2,
+        y: rect.top - wrapperRect.top,
       });
     }
   };
@@ -148,12 +166,6 @@ export default function CalendarHeatmap({ projectId }: CalendarHeatmapProps) {
   const handleTouchEnd = () => {
     setTimeout(() => setTooltip(null), 2000);
   };
-
-  const maxCount = useMemo(() => {
-    return data.reduce((max, c) => Math.max(max, c.count), 0);
-  }, [data]);
-
-  const todayStr = formatDate(new Date().toISOString());
 
   if (loading) {
     return (
@@ -168,7 +180,7 @@ export default function CalendarHeatmap({ projectId }: CalendarHeatmapProps) {
   }
 
   return (
-    <div className="card">
+    <div className="card overflow-hidden">
       <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
         <h3 className="font-semibold">🔥 学习打卡热力图</h3>
         <div className="flex items-center gap-1.5 text-xs">
@@ -187,15 +199,19 @@ export default function CalendarHeatmap({ projectId }: CalendarHeatmapProps) {
         </div>
       </div>
 
-      <div className="heatmap-container overflow-x-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
-        <div className="heatmap-wrapper relative inline-block" style={{ minWidth: '750px' }}>
+      <div className="overflow-x-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
+        <div
+          className="heatmap-wrapper relative inline-block"
+          style={{ minWidth: `${totalCols * COL_STEP + 24}px` }}
+        >
+          {/* 月份标签 */}
           <div className="flex mb-1" style={{ paddingLeft: '24px' }}>
-            <div className="relative flex-1" style={{ height: '16px' }}>
+            <div className="relative" style={{ height: '16px', width: `${totalCols * COL_STEP}px` }}>
               {monthLabels.map((ml, i) => (
                 <span
                   key={i}
                   className="absolute text-[10px] text-primary-600 dark:text-primary-400"
-                  style={{ left: `${ml.col * 15}px` }}
+                  style={{ left: `${ml.col * COL_STEP}px` }}
                 >
                   {ml.label}
                 </span>
@@ -204,59 +220,78 @@ export default function CalendarHeatmap({ projectId }: CalendarHeatmapProps) {
           </div>
 
           <div className="flex">
-            <div className="flex flex-col mr-1.5" style={{ gap: '3px', paddingTop: '2px' }}>
+            {/* 星期标签 */}
+            <div className="flex flex-col mr-1.5" style={{ gap: `${CELL_GAP}px`, paddingTop: '2px' }}>
               {DAY_LABELS.map((label, i) => (
                 <div
                   key={i}
                   className="text-[9px] text-primary-400 dark:text-primary-500 flex items-center"
-                  style={{ height: '14px', width: '20px' }}
+                  style={{ height: `${CELL_SIZE}px`, width: '20px' }}
                 >
                   {i % 2 === 0 ? label : ''}
                 </div>
               ))}
             </div>
 
-            <div className="flex" style={{ gap: '3px' }}>
+            {/* 格子 */}
+            <div className="flex" style={{ gap: `${CELL_GAP}px` }}>
               {weeks.map((week, wi) => (
-                <div key={wi} className="flex flex-col" style={{ gap: '3px' }}>
+                <div key={wi} className="flex flex-col" style={{ gap: `${CELL_GAP}px` }}>
                   {week.map((cell, di) => {
                     if (!cell) {
-                      return <div key={di} className="heatmap-cell" style={{ backgroundColor: 'transparent' }} />;
+                      return (
+                        <div
+                          key={di}
+                          style={{
+                            width: `${CELL_SIZE}px`,
+                            height: `${CELL_SIZE}px`,
+                            backgroundColor: 'transparent',
+                          }}
+                        />
+                      );
                     }
                     const isToday = cell.date === todayStr;
                     return (
                       <div
                         key={di}
-                        className="heatmap-cell relative"
+                        className="heatmap-cell relative cursor-pointer"
                         style={{
+                          width: `${CELL_SIZE}px`,
+                          height: `${CELL_SIZE}px`,
                           backgroundColor: getColor(cell.level),
-                          border: cell.level === 0 ? '1px solid ' + (darkMode ? '#4d7c0f' : '#d9f99d') : isToday ? '2px solid #65a30d' : 'none',
+                          border: cell.level === 0
+                            ? '1px solid ' + (darkMode ? '#4d7c0f' : '#d9f99d')
+                            : isToday
+                              ? '2px solid #65a30d'
+                              : 'none',
                           outline: isToday ? '1px solid #65a30d' : 'none',
                         }}
-                        onMouseEnter={(e) => handleMouseEnter(e, cell)}
-                        onMouseLeave={handleMouseLeave}
+                        onMouseEnter={(e) => handleCellEnter(e, cell)}
+                        onMouseLeave={handleCellLeave}
                         onTouchStart={(e) => handleTouchStart(e, cell)}
                         onTouchEnd={handleTouchEnd}
-                      >
-                        {tooltip && tooltip.date === cell.date && (
-                          <div className="heatmap-tooltip">
-                            <div className="font-medium">{cell.date}</div>
-                            <div>{cell.count} 次打卡</div>
-                          </div>
-                        )}
-                      </div>
+                      />
                     );
                   })}
                 </div>
               ))}
             </div>
+
+            {/* Tooltip - 渲染在格子外部，避免鼠标事件干扰 */}
+            {tooltip && (
+              <div
+                className="heatmap-tooltip pointer-events-none"
+                style={{
+                  left: `${tooltip.x}px`,
+                  top: `${tooltip.y - 10}px`,
+                }}
+              >
+                <div className="font-medium">{tooltip.date}</div>
+                <div>{tooltip.count} 次打卡</div>
+              </div>
+            )}
           </div>
         </div>
-      </div>
-
-      <div className="mt-3 text-xs text-gray-400 flex items-center justify-between flex-wrap gap-2">
-        <span>过去一年累计 {data.reduce((s, c) => s + c.count, 0)} 次打卡</span>
-        <span>最高单日 {maxCount} 次</span>
       </div>
     </div>
   );

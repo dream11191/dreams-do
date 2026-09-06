@@ -137,7 +137,7 @@ async function cloudGetByIndex<T>(storeName: string, indexName: string, value: s
   if (!userId) return null;
   const table = TABLE_MAP[storeName];
   if (!table) return null;
-  const { data, error } = await supabase.from(table).select('*').eq(indexName, value);
+  const { data, error } = await supabase.from(table).select('*').eq(`"${indexName}"`, value);
   if (error) { console.error('cloudGetByIndex error:', error); return null; }
   return (data as unknown[]).map((item) => {
     const { user_id, ...rest } = item as Record<string, unknown>;
@@ -161,7 +161,7 @@ async function cloudRemove(storeName: string, id: string): Promise<boolean> {
   if (!userId) return false;
   const table = TABLE_MAP[storeName];
   if (!table) return false;
-  const { error } = await supabase.from(table).delete().eq('id', id);
+  const { error } = await supabase.from(table).delete().eq('"id"', id);
   if (error) { console.error('cloudRemove error:', error); return false; }
   return true;
 }
@@ -171,7 +171,7 @@ async function cloudGetOne<T>(storeName: string, id: string): Promise<T | undefi
   if (!userId) return null;
   const table = TABLE_MAP[storeName];
   if (!table) return null;
-  const { data, error } = await supabase.from(table).select('*').eq('id', id).single();
+  const { data, error } = await supabase.from(table).select('*').eq('"id"', id).single();
   if (error) { console.error('cloudGetOne error:', error); return null; }
   if (!data) return null;
   const { user_id, ...rest } = data as Record<string, unknown>;

@@ -285,9 +285,10 @@ export default function Study() {
         </div>
       </div>
 
-      {/* 项目选择 */}
-      <div className="flex gap-2 flex-wrap">
-        {projects.map((p) => (
+      {/* 项目选择 - 仅在任务列表视图显示 */}
+      {view === 'tasks' && (
+        <div className="flex gap-2 flex-wrap">
+          {projects.map((p) => (
           <div key={p.id} className="relative group">
             <button
               className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${selectedProject?.id === p.id ? 'bg-primary-500 text-white' : 'bg-gray-200 dark:bg-gray-700'}`}
@@ -303,6 +304,7 @@ export default function Study() {
         ))}
         {projects.length === 0 && <p className="text-sm text-gray-400">暂无项目，请新建</p>}
       </div>
+      )}
 
       {selectedProject && view === 'tasks' && (
         <>
