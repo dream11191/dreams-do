@@ -34,7 +34,7 @@ body {
 /* 全局溢出规范：禁止页面级横向滚动，所有内容不得撑开布局 */
 #root {
   width: 100%;
-  max-width: 100vw;
+  max-width: 100%;
   overflow-x: hidden;
 }
 

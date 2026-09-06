@@ -199,7 +199,7 @@ export default function CalendarHeatmap({ projectId }: CalendarHeatmapProps) {
         </div>
       </div>
 
-      <div className="overflow-x-auto max-w-full" style={{ WebkitOverflowScrolling: 'touch' }}>
+      <div className="overflow-x-auto w-full" style={{ WebkitOverflowScrolling: 'touch' }}>
         <div
           className="heatmap-wrapper relative inline-block"
           style={{ minWidth: `${totalCols * COL_STEP + 24}px` }}
