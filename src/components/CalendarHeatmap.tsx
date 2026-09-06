@@ -67,7 +67,7 @@ export default function CalendarHeatmap({ projectId }: CalendarHeatmapProps) {
       const cells: HeatmapData[] = [];
       const d = new Date(startDate);
       while (d <= endDate) {
-        const dateStr = formatDate(d.toISOString());
+        const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
         const count = countMap[dateStr] || 0;
         cells.push({
           date: dateStr,
@@ -199,7 +199,7 @@ export default function CalendarHeatmap({ projectId }: CalendarHeatmapProps) {
         </div>
       </div>
 
-      <div className="overflow-x-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
+      <div className="overflow-x-auto max-w-full" style={{ WebkitOverflowScrolling: 'touch' }}>
         <div
           className="heatmap-wrapper relative inline-block"
           style={{ minWidth: `${totalCols * COL_STEP + 24}px` }}

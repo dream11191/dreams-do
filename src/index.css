@@ -31,10 +31,11 @@ body {
   transition: background-color 0.3s ease;
 }
 
-/* 全局溢出规范：所有内容溢出使用滚动条，不得撑开布局 */
+/* 全局溢出规范：禁止页面级横向滚动，所有内容不得撑开布局 */
 #root {
   width: 100%;
-  overflow-x: clip;
+  max-width: 100vw;
+  overflow-x: hidden;
 }
 
 .overflow-scroll-x {
