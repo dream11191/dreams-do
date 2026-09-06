@@ -179,7 +179,7 @@ export default function Layout() {
         )}
 
         {/* 主内容 */}
-        <main className="flex-1 p-4 md:p-6 min-h-[calc(100vh-3.5rem)]">
+        <main className="flex-1 min-w-0 p-4 md:p-6 min-h-[calc(100vh-3.5rem)]">
           <Outlet />
         </main>
       </div>

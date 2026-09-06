@@ -442,7 +442,7 @@ export default function Study() {
 
       {/* 统计看板 */}
       {view === 'stats' && stats && (
-        <div className="space-y-6 pb-8">
+        <div className="space-y-6 pb-8 overflow-hidden">
           {/* 日历热力图 */}
           <CalendarHeatmap />
 
