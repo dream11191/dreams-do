@@ -278,11 +278,9 @@ export default function Study() {
         <h2 className="text-xl font-bold">📚 学习打卡</h2>
         <div className="flex gap-2">
           {selectedProject && (
-            <>
-              <button className={`btn-sm ${view === 'tasks' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setView('tasks')}>任务列表</button>
-              <button className={`btn-sm ${view === 'stats' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setView('stats')}>统计看板</button>
-            </>
+            <button className={`btn-sm ${view === 'tasks' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setView('tasks')}>任务列表</button>
           )}
+          <button className={`btn-sm ${view === 'stats' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setView('stats')}>统计看板</button>
           <button className="btn-primary" onClick={openNewProject}>+ 新建项目</button>
         </div>
       </div>
